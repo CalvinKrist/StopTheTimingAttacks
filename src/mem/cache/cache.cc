@@ -156,7 +156,9 @@ bool
 Cache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
               PacketList &writebacks)
 {
-
+    // std::cout << "test";
+    // if (useSecLevels) {std::cout << "!";}
+    // std::cout << std::endl;
     if (pkt->req->isUncacheable()) {
         assert(pkt->isRequest());
 

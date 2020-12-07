@@ -1070,6 +1070,11 @@ class BaseCache : public ClockedObject
         std::vector<std::unique_ptr<CacheCmdStats>> cmd;
     } stats;
 
+    /**
+     * 6501: are we using security levels?
+     */
+    const bool useSecLevels;
+
     /** Registers probes. */
     void regProbePoints() override;
 

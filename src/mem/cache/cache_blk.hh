@@ -89,6 +89,10 @@ class CacheBlk : public ReplaceableEntry
 
     /** Data block tag value. */
     Addr tag;
+
+    /** security level of the block */
+    uint32_t security_level;
+
     /**
      * Contains a copy of the data in this block for easy access. This is used
      * for efficient execution when the data could be actually stored in

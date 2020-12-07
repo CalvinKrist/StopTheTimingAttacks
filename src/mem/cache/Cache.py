@@ -141,6 +141,9 @@ class BaseCache(ClockedObject):
     # data cache.
     write_allocator = Param.WriteAllocator(NULL, "Write allocator")
 
+    # 6501 security levels: use them or not?
+    useSecLevels = Param.Bool(False, "use 6501 security levels")
+
 class Cache(BaseCache):
     type = 'Cache'
     cxx_header = 'mem/cache/cache.hh'

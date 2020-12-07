@@ -105,7 +105,8 @@ BaseCache::BaseCache(const BaseCacheParams *p, unsigned blk_size)
       missCount(p->max_miss_count),
       addrRanges(p->addr_ranges.begin(), p->addr_ranges.end()),
       system(p->system),
-      stats(*this)
+      stats(*this),
+      useSecLevels(p->useSecLevels)
 {
     // the MSHR queue has no reserve entries as we check the MSHR
     // queue on every single allocation, whereas the write queue has
@@ -1037,9 +1038,25 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                   "Should never see a write in a read-only cache %s\n",
                   name());
 
+    /* BEGIN 6501 CHANGES :) */
+    //auto found_block = tags->findBlock(pkt->getAddr(), pkt->isSecure());
+    Cycles security_latency(0);
+
+    bool allowed = true;
+    if (useSecLevels) {
+        // TODO: actually make checkSecurity...
+        std::cout << "accessing w/ security levels\n";
+        //allowed = (checkSecurity(found_block, pkt, security_latency));
+    }
+
     // Access block in the tags
     Cycles tag_latency(0);
     blk = tags->accessBlock(pkt->getAddr(), pkt->isSecure(), tag_latency);
+
+    blk = allowed ? blk : nullptr;  // simulate a miss if we aren't allowed to hit!
+    tag_latency += security_latency;
+
+    /* that's all, folks! */
 
     DPRINTF(Cache, "%s for %s %s\n", __func__, pkt->print(),
             blk ? "hit " + blk->print() : "miss");

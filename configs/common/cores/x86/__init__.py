@@ -1,4 +1,4 @@
-# Copyright (c) 2012, 2017-2018 ARM Limited
+# Copyright (c) 2017 ARM Limited
 # All rights reserved.
 #
 # The license below extends only to copyright in the software and shall
@@ -32,34 +32,23 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Authors: Ashish Venkat
 
-from __future__ import print_function
-from __future__ import absolute_import
+from pkgutil import iter_modules
+from importlib import import_module
 
-from m5 import fatal
-import m5.objects
-from common.cores.x86 import O3_X86_skylake
+_cpu_modules = [
+    name for _, name, ispkg in iter_modules(__path__) if not ispkg
+]
 
-def config_etrace(cpu_cls, cpu_list, options):
-    if issubclass(cpu_cls, m5.objects.DerivO3CPU):
-        # Assign the same file name to all cpus for now. This must be
-        # revisited when creating elastic traces for multi processor systems.
-        for cpu in cpu_list:
-            # Attach the elastic trace probe listener. Set the protobuf trace
-            # file names. Set the dependency window size equal to the cpu it
-            # is attached to.
-            cpu.traceListener = m5.objects.ElasticTrace(
-                                instFetchTraceFile = options.inst_trace_file,
-                                dataDepTraceFile = options.data_trace_file,
-                                depWindowSize = 3 * cpu.numROBEntries)
-            # Make the number of entries in the ROB, LQ and SQ very
-            # large so that there are no stalls due to resource
-            # limitation as such stalls will get captured in the trace
-            # as compute delay. For replay, ROB, LQ and SQ sizes are
-            # modelled in the Trace CPU.
-            cpu.numROBEntries = 512;
-            cpu.LQEntries = 128;
-            cpu.SQEntries = 128;
-    else:
-        fatal("%s does not support data dependency tracing. Use a CPU model of"
-              " type or inherited from DerivO3CPU.", cpu_cls)
+for c in _cpu_modules:
+    try:
+        import_module("." + c, package=__package__)
+    except NameError:
+        # Failed to import a CPU model due to a missing
+        # dependency. This typically happens if gem5 has been compiled
+        # without a CPU model needed by the timing model.
+        pass
+
+__all__ = _cpu_modules 
