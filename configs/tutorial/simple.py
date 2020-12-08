@@ -107,7 +107,8 @@ if args.cpu == "AtomicSimpleCPU":
     system.membus = SystemXBar()
     system.cpu.icache_port = system.membus.slave
     system.cpu.dcache_port = system.membus.slave
-    system.cou.seccache_port = system.membus.slave
+    print(system.cpu.__dict__)
+    system.cpu.seccache_port = system.membus.slave
 else:
     system.cpu.l1d = L1DCache()
     system.cpu.l1i = L1ICache()

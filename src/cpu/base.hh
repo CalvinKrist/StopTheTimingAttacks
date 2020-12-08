@@ -62,6 +62,7 @@
 #include "sim/system.hh"
 #include "debug/Mwait.hh"
 #include <queue>
+#include "debug/SyscallVerbose.hh"
 
 class BaseCPU;
 struct BaseCPUParams;
@@ -225,7 +226,9 @@ class BaseCPU : public ClockedObject
       public:
         SecCPUPort(const std::string &_name, BaseCPU *_cpu)
             : RequestPort(_name, _cpu), cpu(_cpu), activeMMIOReqs(0)
-        { }
+        { 
+            DPRINTF(SyscallVerbose, "Creating SecCPU Port.");
+        }
         /**
          * Interface to send Atomic or Timing IO request.  Assumes that the pkt
          * and corresponding req have been dynamically allocated and deletes

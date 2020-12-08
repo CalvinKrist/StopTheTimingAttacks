@@ -177,7 +177,9 @@ class BaseCPU(ClockedObject):
 
     icache_port = RequestPort("Instruction Port")
     dcache_port = RequestPort("Data Port")
-    _cached_ports = ['icache_port', 'dcache_port']
+    seccache_port = RequestPort("Security Level Cache Port")
+    #_cached_ports = ['icache_port', 'dcache_port']
+    _cached_ports = ['icache_port', 'dcache_port', 'seccache_port']
 
     if buildEnv['TARGET_ISA'] in ['x86', 'arm', 'riscv']:
         _cached_ports += ["itb.walker.port", "dtb.walker.port"]
@@ -212,6 +214,7 @@ class BaseCPU(ClockedObject):
         self.icache = ic
         self.dcache = dc
         self.icache_port = ic.cpu_side
+        self.seccache_port = ic.cpu_side
         self.dcache_port = dc.cpu_side
         self._cached_ports = ['icache.mem_side', 'dcache.mem_side']
         if buildEnv['TARGET_ISA'] in ['x86', 'arm', 'riscv']:

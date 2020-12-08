@@ -135,7 +135,7 @@ BaseCPU::BaseCPU(Params *p, bool is_checker)
       pwrGatingLatency(p->pwr_gating_latency),
       powerGatingOnIdle(p->power_gating_on_idle),
       enterPwrGatingEvent([this]{ enterPwrGating(); }, name()),
-      secPort(name() + ".seccache_port", this)
+      secPort(p->name + ".seccache_port", this)
 {
     // if Python did not provide a valid ID, do it here
     if (_cpuId == -1 ) {
@@ -180,6 +180,7 @@ BaseCPU::BaseCPU(Params *p, bool is_checker)
 Port& 
 BaseCPU::getSecPort()
 {
+    DPRINTF(SyscallVerbose, "Getting sec cache port.");
     return secPort;
 }
 
@@ -416,7 +417,7 @@ BaseCPU::getPort(const string &if_name, PortID idx)
         return getDataPort();
     else if (if_name == "icache_port")
         return getInstPort();
-    else if (if_name == "seccache_port")
+    else if (if_name == "seccache_port") 
         return getSecPort();
     else
         return ClockedObject::getPort(if_name, idx);
