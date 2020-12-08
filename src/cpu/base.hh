@@ -61,6 +61,7 @@
 #include "sim/probe/probe.hh"
 #include "sim/system.hh"
 #include "debug/Mwait.hh"
+#include <queue>
 
 class BaseCPU;
 struct BaseCPUParams;
@@ -78,6 +79,56 @@ struct AddressMonitor
     uint64_t val;
     bool waiting;   // 0=normal, 1=mwaiting
     bool gotWakeup;
+};
+
+enum Status {
+    /** Context not scheduled in KVM.
+     *
+     * The CPU generally enters this state when the guest execute
+     * an instruction that halts the CPU (e.g., WFI on ARM or HLT
+     * on X86) if KVM traps this instruction. Ticks are not
+     * scheduled in this state.
+     *
+     * @see suspendContext()
+     */
+    Idle,
+    /** Running normally.
+     *
+     * This is the normal run state of the CPU. KVM will be
+     * entered next time tick() is called.
+     */
+    Running,
+    /** Requiring service at the beginning of the next cycle.
+     *
+     * The virtual machine has exited and requires service, tick()
+     * will call handleKvmExit() on the next cycle. The next state
+     * after running service is determined in handleKvmExit() and
+     * depends on what kind of service the guest requested:
+     * <ul>
+     *   <li>IO/MMIO (Atomic): RunningServiceCompletion
+     *   <li>IO/MMIO (Timing): RunningMMIOPending
+     *   <li>Halt: Idle
+     *   <li>Others: Running
+     * </ul>
+     */
+    RunningService,
+    /** Timing MMIO request in flight or stalled.
+     *
+     *  The VM has requested IO/MMIO and we are in timing mode.  A timing
+     *  request is either stalled (and will be retried with recvReqRetry())
+     *  or it is in flight.  After the timing request is complete, the CPU
+     *  will transition to the RunningServiceCompletion state.
+     */
+    RunningMMIOPending,
+    /** Service completion in progress.
+     *
+     * The VM has requested service that requires KVM to be
+     * entered once in order to get to a consistent state. This
+     * happens in handleKvmExit() or one of its friends after IO
+     * exits. After executing tick(), the CPU will transition into
+     * the Running or RunningService state.
+     */
+    RunningServiceCompletion,
 };
 
 class CPUProgressEvent : public Event
@@ -154,6 +205,53 @@ class BaseCPU : public ClockedObject
      * @return a reference to the data port
      */
     virtual Port &getDataPort() = 0;
+
+    /**
+     * CS 6501
+     * Purely virtual method that returns a reference to the security level
+     * port.
+     *
+     * @return a reference to the security level port
+     */
+    Port &getSecPort();
+
+    
+    /**
+     * Sec level memory port.  Uses default RequestPort behavior and provides an
+     * interface for CPU to transparently submit atomic or timing requests.
+     */
+    class SecCPUPort : public RequestPort
+    {
+
+      public:
+        SecCPUPort(const std::string &_name, BaseCPU *_cpu)
+            : RequestPort(_name, _cpu), cpu(_cpu), activeMMIOReqs(0)
+        { }
+        /**
+         * Interface to send Atomic or Timing IO request.  Assumes that the pkt
+         * and corresponding req have been dynamically allocated and deletes
+         * them both if the system is in atomic mode.
+         */
+        Tick submitIO(PacketPtr pkt);
+
+        /** Returns next valid state after one or more IO accesses */
+        Status nextIOState() const;
+
+      protected:
+        /** KVM cpu pointer for finishMMIOPending() callback */
+        BaseCPU *cpu;
+
+        /** Pending MMIO packets */
+        std::queue<PacketPtr> pendingMMIOPkts;
+
+        /** Number of MMIO requests in flight */
+        unsigned int activeMMIOReqs;
+
+        bool recvTimingResp(PacketPtr pkt) override;
+
+        void recvReqRetry() override;
+
+    };
 
     /**
      * Returns a sendFunctional delegate for use with port proxies.
@@ -549,6 +647,8 @@ class BaseCPU : public ClockedObject
     Tick functionEntryTick;
     void enableFunctionTrace();
     void traceFunctionsInternal(Addr pc);
+    SecCPUPort secPort;
+    
 
   private:
     static std::vector<BaseCPU *> cpuList;   //!< Static global cpu list
