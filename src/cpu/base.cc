@@ -764,3 +764,56 @@ BaseCPU::waitForRemoteGDB() const
 {
     return params()->wait_for_remote_gdb;
 }
+
+BaseCPU::Status
+BaseCPU::SecCPUPort::nextIOState() const
+{
+    return (activeMMIOReqs || pendingMMIOPkts.size())
+        ? RunningMMIOPending : RunningServiceCompletion;
+}
+
+Tick
+BaseCPU::SecCPUPort::submitIO(PacketPtr pkt)
+{
+    if (cpu->system->isAtomicMode()) {
+        Tick delay = sendAtomic(pkt);
+        delete pkt;
+        return delay;
+    } else {
+        if (pendingMMIOPkts.empty() && sendTimingReq(pkt)) {
+            activeMMIOReqs++;
+        } else {
+            pendingMMIOPkts.push(pkt);
+        }
+        // Return value is irrelevant for timing-mode accesses.
+        return 0;
+    }
+}
+
+bool
+BaseCPU::SecCPUPort::recvTimingResp(PacketPtr pkt)
+{
+    delete pkt;
+    activeMMIOReqs--;
+
+    // We can switch back into KVM when all pending and in-flight MMIO
+    // operations have completed.
+    if (!(activeMMIOReqs || pendingMMIOPkts.size())) {
+        //cpu->finishMMIOPending();
+    }
+    return true;
+}
+
+void
+BaseCPU::SecCPUPort::recvReqRetry()
+{
+    assert(pendingMMIOPkts.size());
+
+    // Assuming that we can issue infinite requests this cycle is a bit
+    // unrealistic, but it's not worth modeling something more complex in
+    // KVM.
+    while (pendingMMIOPkts.size() && sendTimingReq(pendingMMIOPkts.front())) {
+        pendingMMIOPkts.pop();
+        activeMMIOReqs++;
+    }
+}

@@ -81,56 +81,6 @@ struct AddressMonitor
     bool gotWakeup;
 };
 
-enum Status {
-    /** Context not scheduled in KVM.
-     *
-     * The CPU generally enters this state when the guest execute
-     * an instruction that halts the CPU (e.g., WFI on ARM or HLT
-     * on X86) if KVM traps this instruction. Ticks are not
-     * scheduled in this state.
-     *
-     * @see suspendContext()
-     */
-    Idle,
-    /** Running normally.
-     *
-     * This is the normal run state of the CPU. KVM will be
-     * entered next time tick() is called.
-     */
-    Running,
-    /** Requiring service at the beginning of the next cycle.
-     *
-     * The virtual machine has exited and requires service, tick()
-     * will call handleKvmExit() on the next cycle. The next state
-     * after running service is determined in handleKvmExit() and
-     * depends on what kind of service the guest requested:
-     * <ul>
-     *   <li>IO/MMIO (Atomic): RunningServiceCompletion
-     *   <li>IO/MMIO (Timing): RunningMMIOPending
-     *   <li>Halt: Idle
-     *   <li>Others: Running
-     * </ul>
-     */
-    RunningService,
-    /** Timing MMIO request in flight or stalled.
-     *
-     *  The VM has requested IO/MMIO and we are in timing mode.  A timing
-     *  request is either stalled (and will be retried with recvReqRetry())
-     *  or it is in flight.  After the timing request is complete, the CPU
-     *  will transition to the RunningServiceCompletion state.
-     */
-    RunningMMIOPending,
-    /** Service completion in progress.
-     *
-     * The VM has requested service that requires KVM to be
-     * entered once in order to get to a consistent state. This
-     * happens in handleKvmExit() or one of its friends after IO
-     * exits. After executing tick(), the CPU will transition into
-     * the Running or RunningService state.
-     */
-    RunningServiceCompletion,
-};
-
 class CPUProgressEvent : public Event
 {
   protected:
@@ -215,7 +165,56 @@ class BaseCPU : public ClockedObject
      */
     Port &getSecPort();
 
-    
+    enum Status {
+        /** Context not scheduled in KVM.
+         *
+         * The CPU generally enters this state when the guest execute
+         * an instruction that halts the CPU (e.g., WFI on ARM or HLT
+         * on X86) if KVM traps this instruction. Ticks are not
+         * scheduled in this state.
+         *
+         * @see suspendContext()
+         */
+        Idle,
+        /** Running normally.
+         *
+         * This is the normal run state of the CPU. KVM will be
+         * entered next time tick() is called.
+         */
+        Running,
+        /** Requiring service at the beginning of the next cycle.
+         *
+         * The virtual machine has exited and requires service, tick()
+         * will call handleKvmExit() on the next cycle. The next state
+         * after running service is determined in handleKvmExit() and
+         * depends on what kind of service the guest requested:
+         * <ul>
+         *   <li>IO/MMIO (Atomic): RunningServiceCompletion
+         *   <li>IO/MMIO (Timing): RunningMMIOPending
+         *   <li>Halt: Idle
+         *   <li>Others: Running
+         * </ul>
+         */
+        RunningService,
+        /** Timing MMIO request in flight or stalled.
+         *
+         *  The VM has requested IO/MMIO and we are in timing mode.  A timing
+         *  request is either stalled (and will be retried with recvReqRetry())
+         *  or it is in flight.  After the timing request is complete, the CPU
+         *  will transition to the RunningServiceCompletion state.
+         */
+        RunningMMIOPending,
+        /** Service completion in progress.
+         *
+         * The VM has requested service that requires KVM to be
+         * entered once in order to get to a consistent state. This
+         * happens in handleKvmExit() or one of its friends after IO
+         * exits. After executing tick(), the CPU will transition into
+         * the Running or RunningService state.
+         */
+        RunningServiceCompletion,
+    };
+
     /**
      * Sec level memory port.  Uses default RequestPort behavior and provides an
      * interface for CPU to transparently submit atomic or timing requests.
