@@ -134,7 +134,8 @@ BaseCPU::BaseCPU(Params *p, bool is_checker)
       syscallRetryLatency(p->syscallRetryLatency),
       pwrGatingLatency(p->pwr_gating_latency),
       powerGatingOnIdle(p->power_gating_on_idle),
-      enterPwrGatingEvent([this]{ enterPwrGating(); }, name())
+      enterPwrGatingEvent([this]{ enterPwrGating(); }, name()),
+      secPort(p->name + ".seccache_port", this)
 {
     // if Python did not provide a valid ID, do it here
     if (_cpuId == -1 ) {
@@ -173,6 +174,14 @@ BaseCPU::BaseCPU(Params *p, bool is_checker)
         fatal("Number of ISAs (%i) assigned to the CPU does not equal number "
               "of threads (%i).\n", params()->isa.size(), numThreads);
     }
+}
+
+// CS 6501
+Port& 
+BaseCPU::getSecPort()
+{
+    DPRINTF(SyscallVerbose, "Getting sec cache port.");
+    return secPort;
 }
 
 void
@@ -408,6 +417,8 @@ BaseCPU::getPort(const string &if_name, PortID idx)
         return getDataPort();
     else if (if_name == "icache_port")
         return getInstPort();
+    else if (if_name == "seccache_port") 
+        return getSecPort();
     else
         return ClockedObject::getPort(if_name, idx);
 }
@@ -753,4 +764,57 @@ bool
 BaseCPU::waitForRemoteGDB() const
 {
     return params()->wait_for_remote_gdb;
+}
+
+BaseCPU::Status
+BaseCPU::SecCPUPort::nextIOState() const
+{
+    return (activeMMIOReqs || pendingMMIOPkts.size())
+        ? RunningMMIOPending : RunningServiceCompletion;
+}
+
+Tick
+BaseCPU::SecCPUPort::submitIO(PacketPtr pkt)
+{
+    if (cpu->system->isAtomicMode()) {
+        Tick delay = sendAtomic(pkt);
+        delete pkt;
+        return delay;
+    } else {
+        if (pendingMMIOPkts.empty() && sendTimingReq(pkt)) {
+            activeMMIOReqs++;
+        } else {
+            pendingMMIOPkts.push(pkt);
+        }
+        // Return value is irrelevant for timing-mode accesses.
+        return 0;
+    }
+}
+
+bool
+BaseCPU::SecCPUPort::recvTimingResp(PacketPtr pkt)
+{
+    delete pkt;
+    activeMMIOReqs--;
+
+    // We can switch back into KVM when all pending and in-flight MMIO
+    // operations have completed.
+    if (!(activeMMIOReqs || pendingMMIOPkts.size())) {
+        //cpu->finishMMIOPending();
+    }
+    return true;
+}
+
+void
+BaseCPU::SecCPUPort::recvReqRetry()
+{
+    assert(pendingMMIOPkts.size());
+
+    // Assuming that we can issue infinite requests this cycle is a bit
+    // unrealistic, but it's not worth modeling something more complex in
+    // KVM.
+    while (pendingMMIOPkts.size() && sendTimingReq(pendingMMIOPkts.front())) {
+        pendingMMIOPkts.pop();
+        activeMMIOReqs++;
+    }
 }
