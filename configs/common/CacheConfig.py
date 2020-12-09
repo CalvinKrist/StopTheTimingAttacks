@@ -76,8 +76,8 @@ def config_cache(options, system):
             sys.exit(1)
 
         dcache_class, icache_class, l2_cache_class, walk_cache_class = \
-            O3_X86_skylake_DCache, O3_X86_skylake_ICache, O3_X86_skylakeL2, \
-            O3_X86_skylakeWalkCache
+            core.O3_X86_skylake_DCache, core.O3_X86_skylake_ICache, core.O3_X86_skylakeL2, \
+            core.O3_X86_skylakeWalkCache
     elif options.cpu_type == "HPI":
         try:
             import cores.arm.HPI as core
