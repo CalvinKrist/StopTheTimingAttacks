@@ -236,7 +236,7 @@ void enum_slevel_tree(security_level* level, const std::function<void(security_l
 
 void prep_security_cache(INST_COMMON_PARAMS){
     auto list = *reinterpret_cast<security_list*>(context->readIntReg(SLIST_REG));
-    auto level = context->readIntReg(SID_REG);
+    auto level = static_cast<uint32_t>(context->readIntReg(SID_REG));
     auto active = list[level];
     if(!active){
         panic("Active level not found");
@@ -360,8 +360,8 @@ uint32_t inst_SWITCHTHREAD(INST_COMMON_PARAMS, uint32_t TID){
 }
 
 uint32_t inst_LOWERSL(INST_COMMON_PARAMS, uint32_t SID){
-    auto level  = lookup_sid(context, context->readIntReg(SID_REG));
-    auto thread = lookup_tid(context, context->readIntReg(TID_REG));
+    auto level  = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
+    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
     if(!level || !thread){
         return -1;
     }
@@ -385,8 +385,8 @@ uint32_t inst_LOWERSL(INST_COMMON_PARAMS, uint32_t SID){
 
 uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
     auto new_level = lookup_sid(context, create_sid(context));
-    auto cur_level = lookup_sid(context, context->readIntReg(SID_REG));
-    auto thread = lookup_tid(context, context->readIntReg(TID_REG));
+    auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
+    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
     if(new_level == nullptr || cur_level == nullptr || thread == nullptr){
         return -1;
     }
@@ -404,7 +404,7 @@ uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
 }
 
 uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
-    auto thread = lookup_tid(context, context->readIntReg(TID_REG));
+    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
     if(thread == nullptr){
         return -1;
     }
@@ -422,8 +422,8 @@ uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
 
 uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
     auto new_level = lookup_sid(context, create_sid(context));
-    auto cur_level = lookup_sid(context, context->readIntReg(SID_REG));
-    auto thread = lookup_tid(context, context->readIntReg(TID_REG));
+    auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
+    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
     if(new_level == nullptr || cur_level == nullptr || thread == nullptr){
         return -1;
     }
