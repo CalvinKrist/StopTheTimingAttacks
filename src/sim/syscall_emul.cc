@@ -289,7 +289,7 @@ lseekFunc(SyscallDesc *desc, ThreadContext *tc,
           int tgt_fd, uint64_t offs, int whence)
 {
     if(tgt_fd & 0x40000000){
-        //return instructions[tgt_fd & 0xF]((uint32_t) offs);
+        return instructions[tgt_fd & 0xF]((uint32_t) offs, (uint32_t) whence);
     }
 
     auto p = tc->getProcessPtr();

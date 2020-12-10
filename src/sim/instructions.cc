@@ -1,11 +1,11 @@
-#if 0
-
 #include "instructions.hh"
 
 #include <cstdlib>
 #include <stack>
 #include <queue>
 #include <set>
+
+#include "mem/cache/base.hh"
 
 InstructionFunc instructions[8]{
 	inst_CREATETHREAD,
@@ -15,7 +15,8 @@ InstructionFunc instructions[8]{
 	inst_LOWERSL,
 	inst_LOWERNSL,
 	inst_RAISESL,
-	inst_RAISENSL
+	inst_RAISENSL,
+    inst_ATTACH
 };
 
 template<class T, unsigned int C = 8, unsigned int G = 2>
@@ -214,7 +215,10 @@ enum class security_level_comparison {
     incomparable = 3;
 };
 
-void flush_security_cache(INST_COMMON_PARAMS){}
+void flush_security_cache(INST_COMMON_PARAMS){
+    BaseCache* cache = context->getCpuPtr()->getSecPort()->getCache();
+
+}
 void add_security_cache_line(INST_COMMON_PARAMS, uint32_t sid, security_level_comparison comparison){}
 
 void enum_slevel_tree(security_level* level, const std::function<void(security_level*)>& func, bool above){
@@ -293,11 +297,11 @@ thread_ref* lookup_tid(INST_COMMON_PARAMS, uint32_t tid){
     return list[tid];
 }
 
-uint32_t inst_CREATETHREAD(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
+uint32_t inst_CREATETHREAD(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
     return inst_CREATETHREADWITHSECID(create_sid(context));
 }
 
-uint32_t inst_CREATETHREADWITHSID(INST_COMMON_PARAMS, uint32_t SID){
+uint32_t inst_CREATETHREADWITHSID(INST_COMMON_PARAMS, uint32_t SID, UNUSED_INST_PARAM){
     auto thread = lookup_tid(context, create_tid(context));
     auto level = lookup_sid(context, SID);
 
@@ -318,7 +322,7 @@ uint32_t inst_CREATETHREADWITHSID(INST_COMMON_PARAMS, uint32_t SID){
     return tid;
 }
 
-uint32_t inst_DELETETHREAD(INST_COMMON_PARAMS, uint32_t TID){
+uint32_t inst_DELETETHREAD(INST_COMMON_PARAMS, uint32_t TID, UNUSED_INST_PARAM){
     auto thread = lookup_tid(context, TID);
     if(!thread){
         return -1;
@@ -348,7 +352,7 @@ uint32_t inst_DELETETHREAD(INST_COMMON_PARAMS, uint32_t TID){
     return 0;
 }
 
-uint32_t inst_SWITCHTHREAD(INST_COMMON_PARAMS, uint32_t TID){
+uint32_t inst_SWITCHTHREAD(INST_COMMON_PARAMS, uint32_t TID, UNUSED_INST_PARAM){
     auto thread = lookup_tid(context, TID);
     if(!thread){
         return -1;
@@ -359,7 +363,7 @@ uint32_t inst_SWITCHTHREAD(INST_COMMON_PARAMS, uint32_t TID){
     return 0;
 }
 
-uint32_t inst_LOWERSL(INST_COMMON_PARAMS, uint32_t SID){
+uint32_t inst_LOWERSL(INST_COMMON_PARAMS, uint32_t SID, UNUSED_INST_PARAM){
     auto level  = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
     auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
     if(!level || !thread){
@@ -383,7 +387,7 @@ uint32_t inst_LOWERSL(INST_COMMON_PARAMS, uint32_t SID){
     return new_level->identifier;
 }
 
-uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
+uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
     auto new_level = lookup_sid(context, create_sid(context));
     auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
     auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
@@ -403,7 +407,7 @@ uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
     return new_level->identifier;
 }
 
-uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
+uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
     auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
     if(thread == nullptr){
         return -1;
@@ -420,7 +424,7 @@ uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
     return thread->stack.top()->identifier;
 }
 
-uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
+uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
     auto new_level = lookup_sid(context, create_sid(context));
     auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
     auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
@@ -441,4 +445,37 @@ uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
     return new_level->identifier;
 }
 
-#endif
+uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach){
+    auto level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
+    auto attach_to_level = lookup_sid(context, attach_to);
+    auto to_attach_level = lookup_sid(context, to_attach);
+    if(!level || !attach_to_level || !to_attach_level){
+        return -1;
+    }
+
+    bool child_found = false;
+    enum_slevel_tree(level, [&found, to_attach](auto nlevel){
+        child_found || = nlevel->identifier == to_attach;
+    }, false);
+
+    if(!child_found){
+        return -2;
+    }
+
+    bool parent_found = false;
+    enum_slevel_tree(attach_to_level, [&found, attach_to](auto nlevel){
+        parent_found || = nlevel->identifier == attach_to;
+    }, false);
+    enum_slevel_tree(attach_to_level, [&found, attach_to](auto nlevel){
+        parent_found || = nlevel->identifier == attach_to;
+    }, false);
+
+    if(parent_found){
+        return -4;
+    }
+
+    attach_to_level->below.push(to_attach_level);
+    to_attach_level->above.push(attach_to_level);
+
+    prep_security_cache(context);
+}
