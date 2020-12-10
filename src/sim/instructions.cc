@@ -83,6 +83,41 @@ struct thread_ref { // 128 bytes
 
 template<class T>
 struct indirect_list {
+    std::map<uint32_t, T*> map;
+
+    std::stack<uint32_t> free_list;
+
+    uint32_t new_identifier(){
+        if(!free_list.empty()){
+            auto tmp = free_list.top();
+            free_list.pop();
+            map.insert(tmp, new T(tmp));
+            return tmp;
+        }
+
+        map.insert(peak, new T(peak));
+        return peak++;
+    }
+
+    T* operator[](uint32_t identifier){
+        if(map.find(identifier) != map.end()){
+            return map.at(identifier);
+        } else{
+            return nullptr;
+        }
+    }
+
+    void free_identifier(uint32_t identifier){
+        if(map.find(identifier) != map.end()){
+            delete map.at(identifier);
+            map.erase(identifier);
+        }
+        free_list.push(identifier);
+    }
+};
+
+/*template<class T>
+struct indirect_list {
     T*** top_level_table;
 
     uint32_t peak = 1;
@@ -163,7 +198,7 @@ struct indirect_list {
             directory[entry_id] = (T*) calloc(4096, 1);
         }
     }
-};
+};*/
 
 typedef indirect_list<security_level> security_list;
 typedef indirect_list<thread_ref> thread_list;
