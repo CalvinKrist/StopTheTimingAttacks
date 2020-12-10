@@ -90,7 +90,7 @@ class CacheBlk : public ReplaceableEntry
     /** Data block tag value. */
     Addr tag;
 
-    /** security level of the block */
+    /** CS 6501 security level of the block */
     uint32_t security_level;
 
     /**

@@ -125,6 +125,7 @@ class BaseSetAssoc : public BaseTags
     CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat) override
     {
         CacheBlk *blk = findBlock(addr, is_secure);
+        //std::cout << "thiis one is mine" << std::endl;
 
         // Access all tags in parallel, hence one in each way.  The data side
         // either accesses all blocks in parallel, or one block sequentially on
@@ -187,10 +188,10 @@ class BaseSetAssoc : public BaseTags
      * @param pkt Packet holding the address to update
      * @param blk The block to update.
      */
-    void insertBlock(const PacketPtr pkt, CacheBlk *blk) override
+    void insertBlock(const PacketPtr pkt, CacheBlk *blk, uint32_t security_level) override
     {
         // Insert block
-        BaseTags::insertBlock(pkt, blk);
+        BaseTags::insertBlock(pkt, blk, security_level);
 
         // Increment tag counter
         stats.tagsInUse++;

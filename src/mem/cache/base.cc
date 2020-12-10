@@ -1035,6 +1035,11 @@ BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_
     auto port = cpu->getTypedSecPort();
     BaseCache* secCache = (BaseCache*)(&(port.getCache()));
 
+    auto their_sec_level = found_block->security_level;
+    auto my_sec_level = cpu->getContext(0)->readIntReg(0); //TODO: fix the register index
+
+    auto comparison_result = 0; // TODO: compare security levels in the sec cache
+
     // Hit
     if(pkt->isRead()) {
 
@@ -1486,7 +1491,9 @@ BaseCache::allocateBlock(const PacketPtr pkt, PacketList &writebacks)
     }
 
     // Insert new block at victimized entry
-    tags->insertBlock(pkt, victim);
+    BaseCPU* cpu = (BaseCPU*)(&(cpuSidePort.getCpu()));
+    auto sec_level = cpu->getContext(0)->readIntReg(0); //TODO: fix the register index
+    tags->insertBlock(pkt, victim, sec_level);
 
     return victim;
 }

@@ -97,9 +97,12 @@ BaseTags::findBlock(Addr addr, bool is_secure) const
 }
 
 void
-BaseTags::insertBlock(const PacketPtr pkt, CacheBlk *blk)
+BaseTags::insertBlock(const PacketPtr pkt, CacheBlk *blk, uint32_t security_level)
 {
     assert(!blk->isValid());
+
+    /* 6501: Set the security level of the cache block */
+    blk->security_level = security_level;
 
     // Previous block, if existed, has been removed, and now we have
     // to insert the new one
