@@ -57,6 +57,10 @@ def config_cache(options, system):
     if options.external_memory_system:
         ExternalCache = ExternalCacheFactory(options.external_memory_system)
 
+    use_sec_levels = False
+    if options.useSecLevels:
+        use_sec_levels = True
+
     if options.cpu_type == "O3_ARM_v7a_3":
         try:
             import cores.arm.O3_ARM_v7a as core
@@ -133,6 +137,7 @@ def config_cache(options, system):
                                   assoc=options.l1i_assoc)
             dcache = dcache_class(size=options.l1d_size,
                                   assoc=options.l1d_assoc)
+            seccache = icache_class(size='32768B')
 
             # If we have a walker cache specified, instantiate two
             # instances here
@@ -178,8 +183,8 @@ def config_cache(options, system):
 
             # When connecting the caches, the clock is also inherited
             # from the CPU in question
-            system.cpu[i].addPrivateSplitL1Caches(icache, dcache,
-                                                  iwalkcache, dwalkcache)
+            system.cpu[i].addPrivateSplitL1Caches(icache, dcache, seccache,
+                                                  iwalkcache, dwalkcache, use_sec_levels=use_sec_levels)
 
             if options.memchecker:
                 # The mem_side ports of the caches haven't been connected yet.
@@ -199,7 +204,7 @@ def config_cache(options, system):
                         ExternalCache("cpu%d.dcache" % i),
                         ExternalCache("cpu%d.itb_walker_cache" % i),
                         ExternalCache("cpu%d.dtb_walker_cache" % i))
-            else:
+            else:   
                 system.cpu[i].addPrivateSplitL1Caches(
                         ExternalCache("cpu%d.icache" % i),
                         ExternalCache("cpu%d.dcache" % i))
