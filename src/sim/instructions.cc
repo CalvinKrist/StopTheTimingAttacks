@@ -7,7 +7,7 @@
 
 #include "mem/cache/base.hh"
 
-InstructionFunc instructions[8]{
+InstructionFunc instructions[9]{
 	inst_CREATETHREAD,
 	inst_CREATETHREADWITHSID,
 	inst_DELETETHREAD,
@@ -206,12 +206,15 @@ struct indirect_list {
 typedef indirect_list<security_level> security_list;
 typedef indirect_list<thread_ref> thread_list;
 
+security_list slist;
+thread_list tlist;
+
 #define MAX_COMPARABLE 512
 
 enum class security_level_comparison {
-    lower = 0,
-    higher = 1,
-    same = 2,
+    same = 0,
+    lower = 1,
+    higher = 2,
     incomparable = 3;
 };
 
@@ -239,9 +242,8 @@ void enum_slevel_tree(security_level* level, const std::function<void(security_l
 }
 
 void prep_security_cache(INST_COMMON_PARAMS){
-    auto list = *reinterpret_cast<security_list*>(context->readIntReg(SLIST_REG));
     auto level = static_cast<uint32_t>(context->readIntReg(SID_REG));
-    auto active = list[level];
+    auto active = slist[level];
     if(!active){
         panic("Active level not found");
     }
@@ -269,22 +271,19 @@ void prep_security_cache(INST_COMMON_PARAMS){
 }
 
 uint32_t create_sid(INST_COMMON_PARAMS){
-    auto list = *reinterpret_cast<security_list*>(context->readIntReg(SLIST_REG));
-    auto sid = list->new_identifier();
-    *list[sid] = security_level{ sid };
+    auto sid = slist.new_identifier();
+    *slist[sid] = security_level{ sid };
     return sid;
 }
 
 uint32_t create_tid(INST_COMMON_PARAMS){
-    auto list = *reinterpret_cast<security_list*>(context->readIntReg(TLIST_REG));
-    auto tid = list->new_identifier();
-    *list[tid] = thread_ref{ tid };
+    auto tid = tlist.new_identifier();
+    tlist[tid] = thread_ref{ tid };
     return tid;
 }
 
 security_level* lookup_sid(INST_COMMON_PARAMS, uint32_t sid){
-    auto list = *reinterpret_cast<security_list*>(context->readIntReg(SLIST_REG));
-    return list[sid];
+    return slist[sid];
 }
 
 void set_sid(INST_COMMON_PARAMS, uint32_t sid){
@@ -293,8 +292,7 @@ void set_sid(INST_COMMON_PARAMS, uint32_t sid){
 }
 
 thread_ref* lookup_tid(INST_COMMON_PARAMS, uint32_t tid){
-    auto list = *reinterpret_cast<security_list*>(context->readIntReg(TLIST_REG));
-    return list[tid];
+    return tlist[tid];
 }
 
 uint32_t inst_CREATETHREAD(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
@@ -478,4 +476,6 @@ uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach)
     to_attach_level->above.push(attach_to_level);
 
     prep_security_cache(context);
+
+    return 0;
 }
