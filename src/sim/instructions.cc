@@ -271,7 +271,7 @@ void prep_security_cache(INST_COMMON_PARAMS){
         add_security_cache_line(context, level->identifier, security_level_comparison::higher);
     }, true);
 
-    add_security_cache_line(context, active.identifier, security_level_comparison::same);
+    add_security_cache_line(context, active->identifier, security_level_comparison::same);
 }
 
 uint32_t create_sid(INST_COMMON_PARAMS){
@@ -400,7 +400,7 @@ uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM)
     cur_level->below.push(new_level);
     new_level->above.push(cur_level);
     new_level->threads.push(thread);
-    thread->referenes.push(new_level);
+    thread->references.push(new_level);
 
     thread->stack.push(new_level);
 
@@ -437,7 +437,7 @@ uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM)
     cur_level->above.push(new_level);
     new_level->below.push(cur_level);
     new_level->threads.push(thread);
-    thread->referenes.push(new_level);
+    thread->references.push(new_level);
 
     thread->stack.pop();
     thread->stack.push(new_level);
