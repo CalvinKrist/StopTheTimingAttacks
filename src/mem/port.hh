@@ -272,7 +272,7 @@ class ResponsePort : public Port, public AtomicResponseProtocol,
 
     bool defaultBackdoorWarned;
 
-  protected:
+  public:
     SimObject& owner;
 
   public:

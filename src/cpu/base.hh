@@ -258,6 +258,13 @@ class BaseCPU : public ClockedObject
     };
 
     /**
+     * Like getSecPort, but actually returns a SecCPUPort!
+     */
+    SecCPUPort& getTypedSecPort() {
+        return secPort;
+    }
+
+    /**
      * Returns a sendFunctional delegate for use with port proxies.
      */
     virtual PortProxy::SendFunctionalFunc

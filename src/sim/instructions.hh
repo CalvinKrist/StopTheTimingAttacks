@@ -1,3 +1,5 @@
+#if 0
+
 #pragma once
 
 #include "thread_context.hh"
@@ -38,3 +40,5 @@ uint32_t inst_LOWERSL(INST_COMMON_PARAMS, uint32_t SID);
 uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM);
 uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM);
 uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM);
+
+#endif

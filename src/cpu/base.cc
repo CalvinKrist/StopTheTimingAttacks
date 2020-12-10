@@ -822,5 +822,6 @@ BaseCPU::SecCPUPort::recvReqRetry()
 SimObject& 
 BaseCPU::SecCPUPort::getCache()
 {
-    return getPeer().owner;
+    return ((ResponsePort*)(&getPeer()))->owner;
+    // :(
 }

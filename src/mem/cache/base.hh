@@ -783,6 +783,13 @@ class BaseCache : public ClockedObject
     void invalidateBlock(CacheBlk *blk);
 
     /**
+     * Handy little shortcut to invalidate the entire cache. (6501)
+     */
+    void flushCache() {
+        
+    }
+
+    /**
      * Create a writeback request for the given block.
      *
      * @param blk The block to writeback.

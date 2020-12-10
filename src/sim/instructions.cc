@@ -1,3 +1,5 @@
+#if 0
+
 #include "instructions.hh"
 
 #include <cstdlib>
@@ -438,3 +440,5 @@ uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM){
 
     return new_level->identifier;
 }
+
+#endif

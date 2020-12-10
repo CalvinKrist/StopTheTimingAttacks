@@ -1029,10 +1029,11 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
 }
 
 bool
-checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_latency)
+BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_latency)
 {
-    BaseCPU cpu = (BaseCPU)(cpuSidePort.getCPu());
-    BaseCache secCache = (BaseCache)(cpu.getSecPort().getCache());
+    BaseCPU* cpu = (BaseCPU*)(&(cpuSidePort.getCpu()));
+    auto port = cpu->getTypedSecPort();
+    BaseCache* secCache = (BaseCache*)(&(port.getCache()));
 
     // Hit
     if(pkt->isRead()) {
@@ -2333,7 +2334,7 @@ BaseCache::CpuSidePort::recvTimingSnoopResp(PacketPtr pkt)
 SimObject& 
 BaseCache::CpuSidePort::getCpu()
 {
-    return getPeer().owner;
+    return ((ResponsePort*)(&getPeer()))->owner;
 }
 
 
