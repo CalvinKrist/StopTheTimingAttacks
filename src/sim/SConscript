@@ -95,6 +95,7 @@ if env['TARGET_ISA'] != 'null':
     Source('mem_state.cc')
     Source('pseudo_inst.cc')
     Source('syscall_emul.cc')
+    Source('instructions.cc')
     Source('syscall_desc.cc')
     Source('vma.cc')
 

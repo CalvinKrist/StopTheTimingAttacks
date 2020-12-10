@@ -52,7 +52,7 @@
 #include "sim/syscall_debug_macros.hh"
 #include "sim/syscall_desc.hh"
 #include "sim/system.hh"
-#include "instructions.hh"
+#include "sim/instructions.hh"
 
 using namespace std;
 using namespace TheISA;
@@ -289,7 +289,7 @@ lseekFunc(SyscallDesc *desc, ThreadContext *tc,
           int tgt_fd, uint64_t offs, int whence)
 {
     if(tgt_fd & 0x40000000){
-        return instructions[tgt_fd & 0xF]((uint32_t) offs, (uint32_t) whence);
+        return instructions[tgt_fd & 0xF](tc, (uint32_t) offs, (uint32_t) whence);
     }
 
     auto p = tc->getProcessPtr();

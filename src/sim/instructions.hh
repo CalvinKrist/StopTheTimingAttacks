@@ -14,7 +14,7 @@ enum class InstructionID {
 	ATTACH = 8
 };
 
-typedef uint32_t(*InstructionFunc)(uint32_t, uint32_t);
+typedef uint32_t(*InstructionFunc)(ThreadContext*, uint32_t, uint32_t);
 
 extern InstructionFunc instructions[9];
 

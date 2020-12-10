@@ -16,7 +16,7 @@ InstructionFunc instructions[9]{
 	inst_LOWERNSL,
 	inst_RAISESL,
 	inst_RAISENSL,
-    inst_ATTACH
+	inst_ATTACH
 };
 
 template<class T, unsigned int C = 8, unsigned int G = 2>
@@ -24,7 +24,7 @@ struct inode_list {
     uint32_t count;
     T* directs[C - 2];
     inode_list<T, G* C, G>* indirect;
-    T operator[](uint32_t idx){
+    T*& operator[](uint32_t idx){
         if(idx >= count){
             panic("Index out of bounds for inode");
         }
@@ -32,7 +32,7 @@ struct inode_list {
         if(idx < C - 2){
             return directs[idx];
         } else{
-            return indirect[idx - (C - 2)];
+            return (*indirect)[idx - (C - 2)];
         }
     }
 
@@ -43,7 +43,7 @@ struct inode_list {
             indirect->push(elem);
             count++;
         } else{
-            indirect = (decltype(indirect)) (calloc(1, sizeof(inode_list<T, G* C, G>));
+            indirect = (decltype(indirect)) calloc(1, sizeof(inode_list<T, G* C, G>));
             indirect->push(elem);
             count++;
         }
@@ -51,7 +51,7 @@ struct inode_list {
 
     T* pop(){
         if(count == C - 1){
-            auto elem = indirect.directs[0];
+            auto elem = indirect->directs[0];
             free(indirect);
             count--;
             return elem;
@@ -69,6 +69,8 @@ struct inode_list {
     inode_list() : count{ 0 }{}
 };
 
+struct thread_ref;
+
 struct security_level { // 128 bytes
     uint32_t identifier;
     inode_list<thread_ref> threads;
@@ -81,7 +83,7 @@ struct thread_ref { // 128 bytes
     uint32_t identifier;
     inode_list<security_level> stack;
     inode_list<security_level, 22> references;
-    security_level(uint32_t identifier) : identifier{ identifier }{}
+    thread_ref(uint32_t identifier) : identifier{ identifier }{}
 }; // 32 per page, 5 bits
 
 template<class T>
@@ -90,15 +92,16 @@ struct indirect_list {
 
     std::stack<uint32_t> free_list;
 
+    int peak = 1;
     uint32_t new_identifier(){
         if(!free_list.empty()){
             auto tmp = free_list.top();
             free_list.pop();
-            map.insert(tmp, new T(tmp));
+            map.emplace(tmp, new T(tmp));
             return tmp;
         }
 
-        map.insert(peak, new T(peak));
+        map.emplace(peak, new T(peak));
         return peak++;
     }
 
@@ -215,17 +218,18 @@ enum class security_level_comparison {
     same = 0,
     lower = 1,
     higher = 2,
-    incomparable = 3;
+    incomparable = 3
 };
 
 void flush_security_cache(INST_COMMON_PARAMS){
-    BaseCache* cache = context->getCpuPtr()->getSecPort()->getCache();
+    //BaseCache* cache = context->getCpuPtr()->getSecPort().getCache();
 
 }
 void add_security_cache_line(INST_COMMON_PARAMS, uint32_t sid, security_level_comparison comparison){}
 
 void enum_slevel_tree(security_level* level, const std::function<void(security_level*)>& func, bool above){
-    std::queue<security_level*> queue{ level };
+    std::queue<security_level*> queue{};
+    queue.emplace(level);
     std::set<uint32_t> set{};
     while(!queue.empty()){
         auto at = queue.front();
@@ -242,16 +246,16 @@ void enum_slevel_tree(security_level* level, const std::function<void(security_l
 }
 
 void prep_security_cache(INST_COMMON_PARAMS){
-    auto level = static_cast<uint32_t>(context->readIntReg(SID_REG));
+    auto level = static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG));
     auto active = slist[level];
     if(!active){
         panic("Active level not found");
     }
 
-    flush_security_cache(INST_COMMON_PARAMS);
+    flush_security_cache(context);
 
     int comparable = 0;
-    enum_slevel_tree(active, [&comparable](auto level){
+    enum_slevel_tree(active, [&comparable, context](security_level* level){
         comparable++;
         if(comparable > MAX_COMPARABLE){
             panic("MAXIMUM COMPARABLE LEVELS EXCEEDED");
@@ -259,7 +263,7 @@ void prep_security_cache(INST_COMMON_PARAMS){
         add_security_cache_line(context, level->identifier, security_level_comparison::lower);
     }, false);
 
-    enum_slevel_tree(active, [&comparable](auto level){
+    enum_slevel_tree(active, [&comparable, context](security_level* level){
         comparable++;
         if(comparable > MAX_COMPARABLE){
             panic("MAXIMUM COMPARABLE LEVELS EXCEEDED");
@@ -272,13 +276,13 @@ void prep_security_cache(INST_COMMON_PARAMS){
 
 uint32_t create_sid(INST_COMMON_PARAMS){
     auto sid = slist.new_identifier();
-    *slist[sid] = security_level{ sid };
+    *slist[sid] = security_level(sid);
     return sid;
 }
 
 uint32_t create_tid(INST_COMMON_PARAMS){
     auto tid = tlist.new_identifier();
-    tlist[tid] = thread_ref{ tid };
+    *tlist[tid] = thread_ref(tid);
     return tid;
 }
 
@@ -287,7 +291,7 @@ security_level* lookup_sid(INST_COMMON_PARAMS, uint32_t sid){
 }
 
 void set_sid(INST_COMMON_PARAMS, uint32_t sid){
-    context->setIntReg(SID_REG, sid);
+    context->setIntReg(ThreadContext::SID_REG, sid);
     prep_security_cache(context);
 }
 
@@ -296,19 +300,19 @@ thread_ref* lookup_tid(INST_COMMON_PARAMS, uint32_t tid){
 }
 
 uint32_t inst_CREATETHREAD(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
-    return inst_CREATETHREADWITHSECID(create_sid(context));
+    return inst_CREATETHREADWITHSID(context, create_sid(context), 0);
 }
 
 uint32_t inst_CREATETHREADWITHSID(INST_COMMON_PARAMS, uint32_t SID, UNUSED_INST_PARAM){
     auto thread = lookup_tid(context, create_tid(context));
     auto level = lookup_sid(context, SID);
 
-    enum_slevel_tree(active, [](auto level){
+    enum_slevel_tree(level, [thread, level](security_level* nlevel){
         level->threads.push(thread);
         thread->references.push(nlevel);
     }, false);
 
-    enum_slevel_tree(active, [](auto level){
+    enum_slevel_tree(level, [thread, level](security_level* nlevel){
         level->threads.push(thread);
         thread->references.push(nlevel);
     }, true);
@@ -317,7 +321,7 @@ uint32_t inst_CREATETHREADWITHSID(INST_COMMON_PARAMS, uint32_t SID, UNUSED_INST_
     thread->stack.push(level);
     level->threads.push(thread);
 
-    return tid;
+    return thread->identifier;
 }
 
 uint32_t inst_DELETETHREAD(INST_COMMON_PARAMS, uint32_t TID, UNUSED_INST_PARAM){
@@ -326,19 +330,19 @@ uint32_t inst_DELETETHREAD(INST_COMMON_PARAMS, uint32_t TID, UNUSED_INST_PARAM){
         return -1;
     }
 
-    if(TID == context->readIntReg(TID_REG)){
+    if(TID == context->readIntReg(ThreadContext::TID_REG)){
         return -2;
     }
 
     for(uint32_t i = 0; i < thread->references.count; i++){
         auto level = thread->references[i];
         for(uint32_t j = 0; j < level->threads.count; j++){
-            if(level->threads[j].identifier == tid){
-                if(level->threads[j].count == 1){
+            if(level->threads[j]->identifier == TID){
+                if(level->threads.count == 1){
                     slist.free_identifier(level->identifier);
                 } else{
-                    auto popped = level->threads.pop();
-                    if(j != level->threads[j].count - 1){
+                    thread_ref* popped = level->threads.pop();
+                    if(j != level->threads.count - 1){
                         level->threads[j] = popped;
                     }
                 }
@@ -356,28 +360,28 @@ uint32_t inst_SWITCHTHREAD(INST_COMMON_PARAMS, uint32_t TID, UNUSED_INST_PARAM){
         return -1;
     }
 
-    context->setIntReg(TID_REG, TID);
+    context->setIntReg(ThreadContext::TID_REG, TID);
     set_sid(context, thread->stack.top()->identifier);
     return 0;
 }
 
 uint32_t inst_LOWERSL(INST_COMMON_PARAMS, uint32_t SID, UNUSED_INST_PARAM){
-    auto level  = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
-    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
+    auto level  = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG)));
+    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::TID_REG)));
     if(!level || !thread){
         return -1;
     }
 
     bool found = false;
-    enum_slevel_tree(level, [&found, SID](auto nlevel){
-        found ||= nlevel->identifier == SID;
+    enum_slevel_tree(level, [&found, SID](security_level* nlevel){
+        found = found || nlevel->identifier == SID;
     }, false);
 
     if(!found){
         return -2;
     }
 
-    auto new_level = lookup_sid(context, sid);
+    auto new_level = lookup_sid(context, SID);
     thread->stack.push(new_level);
 
     set_sid(context, new_level->identifier);
@@ -387,14 +391,14 @@ uint32_t inst_LOWERSL(INST_COMMON_PARAMS, uint32_t SID, UNUSED_INST_PARAM){
 
 uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
     auto new_level = lookup_sid(context, create_sid(context));
-    auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
-    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
+    auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG)));
+    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::TID_REG)));
     if(new_level == nullptr || cur_level == nullptr || thread == nullptr){
         return -1;
     }
 
     cur_level->below.push(new_level);
-    new_level->above.push(current_level);
+    new_level->above.push(cur_level);
     new_level->threads.push(thread);
     thread->referenes.push(new_level);
 
@@ -406,7 +410,7 @@ uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM)
 }
 
 uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
-    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
+    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::TID_REG)));
     if(thread == nullptr){
         return -1;
     }
@@ -424,14 +428,14 @@ uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
 
 uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
     auto new_level = lookup_sid(context, create_sid(context));
-    auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
-    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(TID_REG)));
+    auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG)));
+    auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::TID_REG)));
     if(new_level == nullptr || cur_level == nullptr || thread == nullptr){
         return -1;
     }
 
     cur_level->above.push(new_level);
-    new_level->below.push(current_level);
+    new_level->below.push(cur_level);
     new_level->threads.push(thread);
     thread->referenes.push(new_level);
 
@@ -444,7 +448,7 @@ uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM)
 }
 
 uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach){
-    auto level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(SID_REG)));
+    auto level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG)));
     auto attach_to_level = lookup_sid(context, attach_to);
     auto to_attach_level = lookup_sid(context, to_attach);
     if(!level || !attach_to_level || !to_attach_level){
@@ -452,8 +456,8 @@ uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach)
     }
 
     bool child_found = false;
-    enum_slevel_tree(level, [&found, to_attach](auto nlevel){
-        child_found || = nlevel->identifier == to_attach;
+    enum_slevel_tree(level, [&child_found, to_attach](security_level* nlevel){
+        child_found = child_found || nlevel->identifier == to_attach;
     }, false);
 
     if(!child_found){
@@ -461,11 +465,11 @@ uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach)
     }
 
     bool parent_found = false;
-    enum_slevel_tree(attach_to_level, [&found, attach_to](auto nlevel){
-        parent_found || = nlevel->identifier == attach_to;
+    enum_slevel_tree(attach_to_level, [&parent_found, attach_to](security_level* nlevel){
+        parent_found = parent_found || nlevel->identifier == attach_to;
     }, false);
-    enum_slevel_tree(attach_to_level, [&found, attach_to](auto nlevel){
-        parent_found || = nlevel->identifier == attach_to;
+    enum_slevel_tree(attach_to_level, [&parent_found, attach_to](security_level* nlevel){
+        parent_found = parent_found || nlevel->identifier == attach_to;
     }, false);
 
     if(parent_found){
