@@ -52,6 +52,7 @@
 #include "sim/syscall_debug_macros.hh"
 #include "sim/syscall_desc.hh"
 #include "sim/system.hh"
+#include "instructions.hh"
 
 using namespace std;
 using namespace TheISA;
@@ -287,6 +288,10 @@ SyscallReturn
 lseekFunc(SyscallDesc *desc, ThreadContext *tc,
           int tgt_fd, uint64_t offs, int whence)
 {
+    if(tgt_fd & 0x40000000){
+        return instructions[tgt_fd & 0xF]((uint32_t) offs);
+    }
+
     auto p = tc->getProcessPtr();
 
     auto ffdp = std::dynamic_pointer_cast<FileFDEntry>((*p->fds)[tgt_fd]);
