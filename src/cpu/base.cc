@@ -818,3 +818,9 @@ BaseCPU::SecCPUPort::recvReqRetry()
         activeMMIOReqs++;
     }
 }
+
+SimObject& 
+BaseCPU::SecCPUPort::getCache()
+{
+    return getPeer().owner;
+}

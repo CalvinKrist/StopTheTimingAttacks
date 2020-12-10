@@ -108,6 +108,8 @@ class BaseCache : public ClockedObject
         NUM_BLOCKED_CAUSES
     };
 
+    bool checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_latency);
+
   protected:
 
     /**
@@ -302,6 +304,8 @@ class BaseCache : public ClockedObject
 
         CpuSidePort(const std::string &_name, BaseCache *_cache,
                     const std::string &_label);
+
+        SimObject& getCpu();
 
     };
 

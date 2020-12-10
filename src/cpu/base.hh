@@ -239,6 +239,8 @@ class BaseCPU : public ClockedObject
         /** Returns next valid state after one or more IO accesses */
         Status nextIOState() const;
 
+        SimObject& getCache();
+
       protected:
         /** KVM cpu pointer for finishMMIOPending() callback */
         BaseCPU *cpu;

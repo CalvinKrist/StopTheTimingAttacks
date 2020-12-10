@@ -60,6 +60,7 @@
 #include "params/BaseCache.hh"
 #include "params/WriteAllocator.hh"
 #include "sim/core.hh"
+#include "cpu/base.hh"
 
 using namespace std;
 
@@ -1028,6 +1029,24 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
 }
 
 bool
+checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_latency)
+{
+    BaseCPU cpu = (BaseCPU)(cpuSidePort.getCPu());
+    BaseCache secCache = (BaseCache)(cpu.getSecPort().getCache());
+
+    // Hit
+    if(pkt->isRead()) {
+
+    // Evict
+    } if(pkt->isWrite() || pkt->isEviction() || pkt->isWriteback()) {
+
+    // Flush
+    } if(pkt->isFlush()) {
+
+    }
+}
+
+bool
 BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                   PacketList &writebacks)
 {
@@ -1039,14 +1058,12 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                   name());
 
     /* BEGIN 6501 CHANGES :) */
-    //auto found_block = tags->findBlock(pkt->getAddr(), pkt->isSecure());
+    auto found_block = tags->findBlock(pkt->getAddr(), pkt->isSecure());
     Cycles security_latency(0);
 
     bool allowed = true;
     if (useSecLevels) {
-        // TODO: actually make checkSecurity...
-        std::cout << "accessing w/ security levels\n";
-        //allowed = (checkSecurity(found_block, pkt, security_latency));
+        allowed = checkSecurity(found_block, pkt, security_latency);
     }
 
     // Access block in the tags
@@ -2311,6 +2328,12 @@ BaseCache::CpuSidePort::recvTimingSnoopResp(PacketPtr pkt)
     // Express snoop responses from requestor to responder, e.g., from L1 to L2
     cache->recvTimingSnoopResp(pkt);
     return true;
+}
+
+SimObject& 
+BaseCache::CpuSidePort::getCpu()
+{
+    return getPeer().owner;
 }
 
 
