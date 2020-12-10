@@ -230,6 +230,11 @@ class CheckerThreadContext : public ThreadContext
     RegVal
     readIntReg(RegIndex reg_idx) const override
     {
+        if(reg_idx == SID_REG)
+            return SEC_LEVEL_REG;
+        if(reg_idx == TID_REG)
+            return THREAD_ID_REG;
+        
         return actualTC->readIntReg(reg_idx);
     }
 
@@ -338,6 +343,15 @@ class CheckerThreadContext : public ThreadContext
     void
     setIntReg(RegIndex reg_idx, RegVal val) override
     {
+        if(reg_idx == SID_REG) {
+            SEC_LEVEL_REG = val;
+            return;
+        }
+        if(reg_idx == TID_REG) {
+            THREAD_ID_REG = val;
+            return;
+        }
+
         actualTC->setIntReg(reg_idx, val);
         checkerTC->setIntReg(reg_idx, val);
     }

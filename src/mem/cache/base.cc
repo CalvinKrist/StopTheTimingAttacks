@@ -1035,16 +1035,28 @@ BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_
     auto port = cpu->getTypedSecPort();
     BaseCache* secCache = (BaseCache*)(&(port.getCache()));
 
-    // Hit
-    if(pkt->isRead()) {
+    auto their_sec_level = found_block->security_level;
+    auto my_sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG);
 
-    // Evict
-    } if(pkt->isWrite() || pkt->isEviction() || pkt->isWriteback()) {
+    auto comparison_result = 0; // TODO: compare security levels in the sec cache
 
-    // Flush
-    } if(pkt->isFlush()) {
+    security_latency += Cycles(1);
 
-    }
+    if(comparison_result == 0)
+        return true;
+
+    bool isEvict = pkt->isWrite() || pkt->isEviction() || pkt->isWriteback();
+    bool isRead = pkt->isRead();
+    bool isFlush = pkt->isFlush();
+
+    if(comparison_result == 1 && (isRead || isFlush))
+        return true;
+    if(comparison_result == 2 && isEvict)
+        return true;
+    if(comparison_result == 3 && isEvict)
+        return true;
+
+    return false;
 }
 
 bool
@@ -1486,7 +1498,9 @@ BaseCache::allocateBlock(const PacketPtr pkt, PacketList &writebacks)
     }
 
     // Insert new block at victimized entry
-    tags->insertBlock(pkt, victim);
+    BaseCPU* cpu = (BaseCPU*)(&(cpuSidePort.getCpu()));
+    auto sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG); 
+    tags->insertBlock(pkt, victim, sec_level);
 
     return victim;
 }

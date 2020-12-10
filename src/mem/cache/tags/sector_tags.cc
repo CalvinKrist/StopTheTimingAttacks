@@ -169,7 +169,7 @@ SectorTags::accessBlock(Addr addr, bool is_secure, Cycles &lat)
 }
 
 void
-SectorTags::insertBlock(const PacketPtr pkt, CacheBlk *blk)
+SectorTags::insertBlock(const PacketPtr pkt, CacheBlk *blk, uint32_t security_level)
 {
     // Get block's sector
     SectorSubBlk* sub_blk = static_cast<SectorSubBlk*>(blk);
@@ -189,7 +189,7 @@ SectorTags::insertBlock(const PacketPtr pkt, CacheBlk *blk)
     }
 
     // Do common block insertion functionality
-    BaseTags::insertBlock(pkt, blk);
+    BaseTags::insertBlock(pkt, blk, security_level);
 }
 
 CacheBlk*

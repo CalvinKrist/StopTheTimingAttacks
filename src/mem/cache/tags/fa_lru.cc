@@ -205,7 +205,7 @@ FALRU::findVictim(Addr addr, const bool is_secure, const std::size_t size,
 }
 
 void
-FALRU::insertBlock(const PacketPtr pkt, CacheBlk *blk)
+FALRU::insertBlock(const PacketPtr pkt, CacheBlk *blk, uint32_t security_level)
 {
     FALRUBlk* falruBlk = static_cast<FALRUBlk*>(blk);
 
@@ -213,7 +213,7 @@ FALRU::insertBlock(const PacketPtr pkt, CacheBlk *blk)
     assert(falruBlk->inCachesMask == 0);
 
     // Do common block insertion functionality
-    BaseTags::insertBlock(pkt, blk);
+    BaseTags::insertBlock(pkt, blk, security_level);
 
     // Increment tag counter
     stats.tagsInUse++;

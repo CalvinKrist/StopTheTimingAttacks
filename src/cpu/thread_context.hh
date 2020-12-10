@@ -95,6 +95,15 @@ class ThreadContext : public PCEventScope
 
   public:
 
+    /* CS 6501 Create simple "registers" */
+    static const RegIndex SID_REG = 65535;
+    static const RegIndex TID_REG = 65535 - 1;
+  protected:
+    RegVal SEC_LEVEL_REG = 0;
+    RegVal THREAD_ID_REG = 0;
+
+  public:
+
     enum Status
     {
         /// Running.  Instructions should be executed only when

@@ -59,6 +59,7 @@
 #include "mem/packet.hh"
 #include "params/BaseTags.hh"
 #include "sim/clocked_object.hh"
+#include "cpu/base.hh"
 
 class System;
 class IndexingPolicy;
@@ -69,6 +70,8 @@ class ReplaceableEntry;
  */
 class BaseTags : public ClockedObject
 {
+  public:
+    BaseCPU * cpu;
   protected:
     /** The block size of the cache. */
     const unsigned blkSize;
@@ -306,7 +309,7 @@ class BaseTags : public ClockedObject
      * @param pkt Packet holding the address to update
      * @param blk The block to update.
      */
-    virtual void insertBlock(const PacketPtr pkt, CacheBlk *blk);
+    virtual void insertBlock(const PacketPtr pkt, CacheBlk *blk, uint32_t security_level);
 
     /**
      * Regenerate the block address.

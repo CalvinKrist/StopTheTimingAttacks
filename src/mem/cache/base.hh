@@ -338,6 +338,12 @@ class BaseCache : public ClockedObject
     /** To probe when a cache fill occurs */
     ProbePointArg<PacketPtr> *ppFill;
 
+  public:
+    BaseTags * getTags() {
+        return tags;
+    }
+
+  protected:
     /**
      * The writeAllocator drive optimizations for streaming writes.
      * It first determines whether a WriteReq MSHR should be delayed,
