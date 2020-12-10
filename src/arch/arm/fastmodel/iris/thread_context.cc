@@ -577,6 +577,12 @@ ThreadContext::setMiscRegNoEffect(RegIndex misc_reg, const RegVal val)
 RegVal
 ThreadContext::readIntReg(RegIndex reg_idx) const
 {
+
+    if(reg_idx == SEC_LEVEL_REG_IDX)
+        return SEC_LEVEL_REG;
+    if(reg_idx = THREAD_ID_REG_IDX)
+        return THREAD_ID_REG;
+
     ArmISA::CPSR cpsr = readMiscRegNoEffect(ArmISA::MISCREG_CPSR);
 
     iris::ResourceReadResult result;
@@ -590,6 +596,16 @@ ThreadContext::readIntReg(RegIndex reg_idx) const
 void
 ThreadContext::setIntReg(RegIndex reg_idx, RegVal val)
 {
+
+    if(reg_idx == SEC_LEVEL_REG_IDX) {
+            SEC_LEVEL_REG = val;
+        return;
+    }
+    if(reg_idx = THREAD_ID_REG_IDX) {
+        THREAD_ID_REG = val;
+        return;
+    }
+
     ArmISA::CPSR cpsr = readMiscRegNoEffect(ArmISA::MISCREG_CPSR);
 
     iris::ResourceWriteResult result;

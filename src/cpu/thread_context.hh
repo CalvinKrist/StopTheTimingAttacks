@@ -95,6 +95,15 @@ class ThreadContext : public PCEventScope
 
   public:
 
+    /* CS 6501 Create simple "registers" */
+    static const SEC_LEVEL_REG_INDX = 65535;
+    static const THREAD_ID_REG_INDX = 65535 - 1;
+  private:
+    uint64_t SEC_LEVEL_REG = 0;
+    uint64_t THREAD_ID_REG = 0;
+
+  public:
+
     enum Status
     {
         /// Running.  Instructions should be executed only when
