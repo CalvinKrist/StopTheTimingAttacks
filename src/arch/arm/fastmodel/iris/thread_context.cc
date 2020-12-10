@@ -578,11 +578,11 @@ RegVal
 ThreadContext::readIntReg(RegIndex reg_idx) const
 {
 
-    if(reg_idx == SEC_LEVEL_REG_IDX)
+    if(reg_idx == SID_REG)
         return SEC_LEVEL_REG;
-    if(reg_idx = THREAD_ID_REG_IDX)
+    if(reg_idx == TID_REG)
         return THREAD_ID_REG;
-
+    
     ArmISA::CPSR cpsr = readMiscRegNoEffect(ArmISA::MISCREG_CPSR);
 
     iris::ResourceReadResult result;
@@ -597,11 +597,11 @@ void
 ThreadContext::setIntReg(RegIndex reg_idx, RegVal val)
 {
 
-    if(reg_idx == SEC_LEVEL_REG_IDX) {
-            SEC_LEVEL_REG = val;
+    if(reg_idx == SID_REG) {
+        SEC_LEVEL_REG = val;
         return;
     }
-    if(reg_idx = THREAD_ID_REG_IDX) {
+    if(reg_idx == TID_REG) {
         THREAD_ID_REG = val;
         return;
     }

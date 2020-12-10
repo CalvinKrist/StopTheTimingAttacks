@@ -96,11 +96,11 @@ class ThreadContext : public PCEventScope
   public:
 
     /* CS 6501 Create simple "registers" */
-    static const SEC_LEVEL_REG_INDX = 65535;
-    static const THREAD_ID_REG_INDX = 65535 - 1;
-  private:
-    uint64_t SEC_LEVEL_REG = 0;
-    uint64_t THREAD_ID_REG = 0;
+    static const RegIndex SID_REG = 65535;
+    static const RegIndex TID_REG = 65535 - 1;
+  protected:
+    RegVal SEC_LEVEL_REG = 0;
+    RegVal THREAD_ID_REG = 0;
 
   public:
 

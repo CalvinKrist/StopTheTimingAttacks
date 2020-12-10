@@ -286,9 +286,9 @@ class SimpleThread : public ThreadState, public ThreadContext
     readIntReg(RegIndex reg_idx) const override
     {
 
-        if(reg_idx == SEC_LEVEL_REG_IDX)
+        if(reg_idx == SID_REG)
             return SEC_LEVEL_REG;
-        if(reg_idx = THREAD_ID_REG_IDX)
+        if(reg_idx == TID_REG)
             return THREAD_ID_REG;
 
         int flatIndex = isa->flattenIntIndex(reg_idx);
@@ -460,15 +460,15 @@ class SimpleThread : public ThreadState, public ThreadContext
     void
     setIntReg(RegIndex reg_idx, RegVal val) override
     {
-        if(reg_idx == SEC_LEVEL_REG_IDX) {
+        if(reg_idx == SID_REG) {
             SEC_LEVEL_REG = val;
             return;
         }
-        if(reg_idx = THREAD_ID_REG_IDX) {
+        if(reg_idx == TID_REG) {
             THREAD_ID_REG = val;
             return;
         }
-        
+
         int flatIndex = isa->flattenIntIndex(reg_idx);
         assert(flatIndex < TheISA::NumIntRegs);
         DPRINTF(IntRegs, "Setting int reg %d (%d) to %#x.\n",
