@@ -1029,15 +1029,21 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
     return lat;
 }
 
+#include <iostream>
 bool
 BaseCache::add_security_cache_line(uint32_t level, char comparison)
 {
     std::vector<CacheBlk*> evicted;
     CacheBlk *blk = tags->findVictim(level, false, blkSize * 8, evicted);
     if(!blk){
+	std::cerr << "Failed to insert cache line!" << std::endl;
         return false;
     }
-    blk->insert(level, false, 0, 0);
+
+    std::cout << "Adding " << level << ": " << (int) comparison << " to the cache" << std::endl;
+    std::cout << "Cache tag: " << tags->extractTag(level) << " for " << level << std::endl;
+    std::cout << "Block is already valid? " << blk->isValid() << std::endl;
+    blk->insert(tags->extractTag(level), false, 0, 0);
     blk->data = (uint8_t*)(new char(comparison));
     return true;
 }
@@ -1045,8 +1051,6 @@ BaseCache::add_security_cache_line(uint32_t level, char comparison)
 CacheBlk* BaseCache::getBlock(Addr addr, bool isSecure){ 
     return tags->findBlock(addr, isSecure);
 }
-
-#include <iostream>
 
 bool
 BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles& security_latency)
@@ -1064,10 +1068,12 @@ BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles& security
     uint32_t their_sec_level = found_block->security_level;
     uint32_t my_sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG);
 
-    auto blk = secCache.getBlock(pkt->getAddr(), false);
+    auto blk = secCache.getBlock(their_sec_level, false);
     auto comparison_result = 3; // TODO: compare security levels in the sec cache
     if(blk){
         comparison_result = *blk->data;
+    } else if(their_sec_level != 0){
+	std::cout << "Failed looking up " << their_sec_level << std::endl;
     }
 
     if(my_sec_level == 0 && their_sec_level != 0){
@@ -1539,12 +1545,16 @@ BaseCache::allocateBlock(const PacketPtr pkt, PacketList &writebacks)
     }
 
     // Insert new block at victimized entry
-    auto threads = system->threads;
-    ThreadContext* context = threads[0];
-    BaseCPU * cpu = context->getCpuPtr();
-    auto thread_context = cpu->getContext(0);
-    auto sec_level = thread_context ? thread_context->readIntReg(ThreadContext::SID_REG) : 0; 
-    tags->insertBlock(pkt, victim, sec_level);
+    if(useSecLevels){
+        auto threads = system->threads;
+        ThreadContext* context = threads[0];
+        BaseCPU * cpu = context->getCpuPtr();
+        auto thread_context = cpu->getContext(0);
+        auto sec_level = thread_context ? thread_context->readIntReg(ThreadContext::SID_REG) : 0; 
+        tags->insertBlock(pkt, victim, sec_level);
+    } else {
+	tags->insertBlock(pkt, victim, 0);
+    }
 
     return victim;
 }

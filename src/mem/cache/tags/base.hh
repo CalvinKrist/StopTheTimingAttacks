@@ -84,10 +84,10 @@ class BaseTags : public ClockedObject
 
     /** System we are currently operating in. */
     System *system;
-
+  public:
     /** Indexing policy */
     BaseIndexingPolicy *indexingPolicy;
-
+  protected:
     /**
      * The number of tags that need to be touched to meet the warmup
      * percentage.
