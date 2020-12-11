@@ -1029,12 +1029,17 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
     return lat;
 }
 
-void 
+bool
 BaseCache::add_security_cache_line(uint32_t level, char comparison)
 {
-    CacheBlk *blk = tags->findBlock(level, false);
+    std::vector<CacheBlk*> evicted;
+    CacheBlk *blk = tags->findVictim(level, false, blkSize * 8, evicted);
+    if(!blk){
+        return false;
+    }
     blk->insert(level, false, 0, 0);
     blk->data = (uint8_t*)(new char(comparison));
+    return true;
 }
 
 CacheBlk* BaseCache::getBlock(Addr addr, bool isSecure){ 

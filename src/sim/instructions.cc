@@ -223,8 +223,11 @@ enum class security_level_comparison {
 };
 
 void flush_security_cache(INST_COMMON_PARAMS){
-    //BaseCache* cache = context->getCpuPtr()->getSecPort().getCache();
+    BaseCPU* cpu = context->getCpuPtr();
+    auto& port = cpu->getTypedSecPort();
+    auto& secCache = (BaseCache&) port.getCache();
 
+    secCache.memInvalidate();
 }
 void add_security_cache_line(INST_COMMON_PARAMS, uint32_t sid, security_level_comparison comparison) {
     BaseCPU * cpu = context->getCpuPtr();
@@ -422,7 +425,6 @@ uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
         return -1;
     }
 
-    //THINK THIS SHOULD BE <= 1
     if(thread->stack.count <= 1){
         return -2;
     }

@@ -310,7 +310,7 @@ class BaseCache : public ClockedObject
     };
 
     public:
-        void add_security_cache_line(uint32_t level, char comparison);
+        bool add_security_cache_line(uint32_t level, char comparison);
     protected:
 
     CpuSidePort cpuSidePort;
@@ -827,6 +827,8 @@ class BaseCache : public ClockedObject
      */
     virtual void memWriteback() override;
 
+
+public:
     /**
      * Invalidates all blocks in the cache.
      *
@@ -836,6 +838,7 @@ class BaseCache : public ClockedObject
      */
     virtual void memInvalidate() override;
 
+protected:
     /**
      * Determine if there are any dirty blocks in the cache.
      *
