@@ -1029,6 +1029,14 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
     return lat;
 }
 
+void 
+BaseCache::add_security_cache_line(uint32_t level, char comparison)
+{
+    CacheBlk *blk = tags->findBlock(level, false);
+    blk->insert(level, false, 0, 0);
+    blk->data = (uint8_t*)(new char(comparison));
+}
+
 bool
 BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_latency)
 {
