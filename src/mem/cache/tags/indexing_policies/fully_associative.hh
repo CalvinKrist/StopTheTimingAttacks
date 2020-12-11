@@ -57,7 +57,7 @@ class FullyAssociative : public BaseIndexingPolicy
 
 public:
 
-    typedef FullyAssociativeParams Params
+    typedef FullyAssociativeParams Params;
 
     /**
      * Construct and initialize this policy.

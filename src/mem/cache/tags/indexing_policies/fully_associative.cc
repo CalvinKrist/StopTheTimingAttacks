@@ -2,15 +2,15 @@
 
 #include "mem/cache/replacement_policies/replaceable_entry.hh"
 
-FullyAssociative::FullyAssociative(const Params* p)
-    : BaseIndexingPolicy(p), assoc(p->assoc),
-    numSets(1), setShift(0), setMask(0), sets(1),
-    tagShift(0){}
-
-uint32_t
-FullyAssociative::extractSet(const Addr addr) const{
-    return addr;
+const FullyAssociative::Params* fixParams(const FullyAssociative::Params* p){
+    auto tmp = const_cast<FullyAssociative::Params*>(p);
+    tmp->entry_size = 1;
+    tmp->size = p->assoc;
+    return p;    
 }
+
+FullyAssociative::FullyAssociative(const Params* p)
+    : BaseIndexingPolicy(fixParams(p)){}
 
 Addr
 FullyAssociative::regenerateAddr(const Addr tag, const ReplaceableEntry* entry)
@@ -24,6 +24,6 @@ FullyAssociative::getPossibleEntries(const Addr addr) const{
 }
 
 FullyAssociative*
-SetAssociativeParams::create(){
-    return new SetAssociative(this);
+FullyAssociativeParams::create(){
+    return new FullyAssociative(this);
 }
