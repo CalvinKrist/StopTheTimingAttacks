@@ -1029,7 +1029,6 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
     return lat;
 }
 
-<<<<<<< HEAD
 void 
 BaseCache::add_security_cache_line(uint32_t level, char comparison)
 {
