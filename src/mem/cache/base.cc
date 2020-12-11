@@ -1031,12 +1031,12 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
 bool
 BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_latency)
 {
-    BaseCPU* cpu = (BaseCPU*)(&(cpuSidePort.getCpu()));
-    auto port = cpu->getTypedSecPort();
-    BaseCache* secCache = (BaseCache*)(&(port.getCache()));
+    auto& cpu = (BaseCPU&) cpuSidePort.getCpu();
+    auto port = cpu.getTypedSecPort();
+    auto& secCache = port.getCache();
 
     auto their_sec_level = found_block->security_level;
-    auto my_sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG);
+    //auto my_sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG);
 
     auto comparison_result = 0; // TODO: compare security levels in the sec cache
 
@@ -1498,9 +1498,9 @@ BaseCache::allocateBlock(const PacketPtr pkt, PacketList &writebacks)
     }
 
     // Insert new block at victimized entry
-    BaseCPU* cpu = (BaseCPU*)(&(cpuSidePort.getCpu()));
-    auto sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG); 
-    tags->insertBlock(pkt, victim, sec_level);
+    auto& cpu = cpuSidePort.getCpu();
+    //auto sec_level = cpu.getContext(0)->readIntReg(ThreadContext::SID_REG); 
+    tags->insertBlock(pkt, victim, 0);
 
     return victim;
 }
