@@ -117,8 +117,9 @@ struct indirect_list {
         if(map.find(identifier) != map.end()){
             delete map.at(identifier);
             map.erase(identifier);
+            free_list.push(identifier);
         }
-        free_list.push(identifier);
+        //Maybe panic on an else
     }
 };
 
@@ -415,7 +416,8 @@ uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
         return -1;
     }
 
-    if(thread->stack.count == 0){
+    //THINK THIS SHOULD BE <= 1
+    if(thread->stack.count <= 1){
         return -2;
     }
 
@@ -465,12 +467,12 @@ uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach)
     }
 
     bool parent_found = false;
-    enum_slevel_tree(attach_to_level, [&parent_found, attach_to](security_level* nlevel){
-        parent_found = parent_found || nlevel->identifier == attach_to;
+    enum_slevel_tree(attach_to_level, [&parent_found, to_attach](security_level* nlevel){
+        parent_found = parent_found || nlevel->identifier == to_attach;
     }, false);
-    enum_slevel_tree(attach_to_level, [&parent_found, attach_to](security_level* nlevel){
-        parent_found = parent_found || nlevel->identifier == attach_to;
-    }, false);
+    enum_slevel_tree(attach_to_level, [&parent_found, to_attach](security_level* nlevel){
+        parent_found = parent_found || nlevel->identifier == to_attach;
+    }, true);
 
     if(parent_found){
         return -4;
