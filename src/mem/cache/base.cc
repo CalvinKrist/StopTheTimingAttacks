@@ -1029,8 +1029,20 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
     return lat;
 }
 
+void 
+BaseCache::add_security_cache_line(uint32_t level, char comparison)
+{
+    CacheBlk *blk = tags->findBlock(level, false);
+    blk->insert(level, false, 0, 0);
+    blk->data = (uint8_t*)(new char(comparison));
+}
+
+CacheBlk* BaseCache::getBlock(Addr addr, bool isSecure){ 
+    return tags->findBlock(addr, isSecure);
+}
+
 bool
-BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_latency)
+BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles& security_latency)
 {
     auto threads = system->threads;
     ThreadContext* context = threads[0];
@@ -1041,7 +1053,11 @@ BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_
     auto their_sec_level = found_block->security_level;
     auto my_sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG);
 
-    auto comparison_result = 0; // TODO: compare security levels in the sec cache
+    auto blk = secCache.getBlock(pkt->getAddr(), false);
+    auto comparison_result = 3; // TODO: compare security levels in the sec cache
+    if(blk){
+        comparison_result = *blk->data;
+    }
 
     security_latency += Cycles(1);
 
@@ -1086,7 +1102,6 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
     Cycles tag_latency(0);
     blk = tags->accessBlock(pkt->getAddr(), pkt->isSecure(), tag_latency);
 
-    blk = allowed ? blk : nullptr;  // simulate a miss if we aren't allowed to hit!
     tag_latency += security_latency;
 
     /* that's all, folks! */
@@ -1134,7 +1149,7 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                 // cache have the block, so we can clear the
                 // BLOCK_CACHED flag in the Writeback if set and
                 // discard the CleanEvict by returning true.
-                wbPkt->clearBlockCached();
+                if(allowed) wbPkt->clearBlockCached();
 
                 // A clean evict does not need to access the data array
                 lat = calculateTagOnlyLatency(pkt->headerDelay, tag_latency);
@@ -1145,7 +1160,7 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                 // Dirty writeback from above trumps our clean
                 // writeback... discard here
                 // Note: markInService will remove entry from writeback buffer.
-                markInService(wb_entry);
+                if(allowed) markInService(wb_entry);
                 delete wbPkt;
             }
         }
@@ -1188,7 +1203,7 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
             }
 
             blk->status |= BlkReadable;
-        } else if (compressor) {
+        } else if (allowed && compressor) {
             // This is an overwrite to an existing block, therefore we need
             // to check for data expansion (i.e., block was compressed with
             // a smaller size, and now it doesn't fit the entry anymore).
@@ -1202,26 +1217,26 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
 
         // only mark the block dirty if we got a writeback command,
         // and leave it as is for a clean writeback
-        if (pkt->cmd == MemCmd::WritebackDirty) {
+        if (pkt->cmd == MemCmd::WritebackDirty && allowed) {
             // TODO: the coherent cache can assert(!blk->isDirty());
             blk->status |= BlkDirty;
         }
         // if the packet does not have sharers, it is passing
         // writable, and we got the writeback in Modified or Exclusive
         // state, if not we are in the Owned or Shared state
-        if (!pkt->hasSharers()) {
+        if (!pkt->hasSharers() && allowed) {
             blk->status |= BlkWritable;
         }
         // nothing else to do; writeback doesn't expect response
         assert(!pkt->needsResponse());
-        pkt->writeDataToBlock(blk->data, blkSize);
+        if(allowed) pkt->writeDataToBlock(blk->data, blkSize);
         DPRINTF(Cache, "%s new state is %s\n", __func__, blk->print());
-        incHitCount(pkt);
+        if(allowed) incHitCount(pkt);
 
         // When the packet metadata arrives, the tag lookup will be done while
         // the payload is arriving. Then the block will be ready to access as
         // soon as the fill is done
-        blk->setWhenReady(clockEdge(fillLatency) + pkt->headerDelay +
+        if(allowed) blk->setWhenReady(clockEdge(fillLatency) + pkt->headerDelay +
             std::max(cyclesToTicks(tag_latency), (uint64_t)pkt->payloadDelay));
 
         return true;
@@ -1265,7 +1280,7 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
 
                 blk->status |= BlkReadable;
             }
-        } else if (compressor) {
+        } else if (compressor && allowed) {
             // This is an overwrite to an existing block, therefore we need
             // to check for data expansion (i.e., block was compressed with
             // a smaller size, and now it doesn't fit the entry anymore).
@@ -1282,20 +1297,20 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
         // cache, we need to update the data and the block flags
         assert(blk);
         // TODO: the coherent cache can assert(!blk->isDirty());
-        if (!pkt->writeThrough()) {
+        if (!pkt->writeThrough() && allowed) {
             blk->status |= BlkDirty;
         }
         // nothing else to do; writeback doesn't expect response
         assert(!pkt->needsResponse());
-        pkt->writeDataToBlock(blk->data, blkSize);
+        if(allowed) pkt->writeDataToBlock(blk->data, blkSize);
         DPRINTF(Cache, "%s new state is %s\n", __func__, blk->print());
 
-        incHitCount(pkt);
+        if(allowed) incHitCount(pkt);
 
         // When the packet metadata arrives, the tag lookup will be done while
         // the payload is arriving. Then the block will be ready to access as
         // soon as the fill is done
-        blk->setWhenReady(clockEdge(fillLatency) + pkt->headerDelay +
+        if(allowed) blk->setWhenReady(clockEdge(fillLatency) + pkt->headerDelay +
             std::max(cyclesToTicks(tag_latency), (uint64_t)pkt->payloadDelay));
 
         // If this a write-through packet it will be sent to cache below
@@ -1303,7 +1318,7 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
     } else if (blk && (pkt->needsWritable() ? blk->isWritable() :
                        blk->isReadable())) {
         // OK to satisfy access
-        incHitCount(pkt);
+        if(allowed) incHitCount(pkt);
 
         // Calculate access latency based on the need to access the data array
         if (pkt->isRead()) {
@@ -1318,8 +1333,8 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
             lat = calculateTagOnlyLatency(pkt->headerDelay, tag_latency);
         }
 
-        satisfyRequest(pkt, blk);
-        maintainClusivity(pkt->fromCache(), blk);
+        if(allowed) satisfyRequest(pkt, blk);
+        if(allowed) maintainClusivity(pkt->fromCache(), blk);
 
         return true;
     }

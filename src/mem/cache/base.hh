@@ -108,7 +108,7 @@ class BaseCache : public ClockedObject
         NUM_BLOCKED_CAUSES
     };
 
-    bool checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_latency);
+    bool checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles& security_latency);
 
   protected:
 
@@ -309,6 +309,10 @@ class BaseCache : public ClockedObject
 
     };
 
+    public:
+        void add_security_cache_line(uint32_t level, char comparison);
+    protected:
+
     CpuSidePort cpuSidePort;
     MemSidePort memSidePort;
 
@@ -463,6 +467,8 @@ class BaseCache : public ClockedObject
      */
     virtual bool access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                         PacketList &writebacks);
+
+    CacheBlk* getBlock(Addr addr, bool isSecure);
 
     /*
      * Handle a timing request that hit in the cache

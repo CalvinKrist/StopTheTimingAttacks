@@ -226,7 +226,13 @@ void flush_security_cache(INST_COMMON_PARAMS){
     //BaseCache* cache = context->getCpuPtr()->getSecPort().getCache();
 
 }
-void add_security_cache_line(INST_COMMON_PARAMS, uint32_t sid, security_level_comparison comparison){}
+void add_security_cache_line(INST_COMMON_PARAMS, uint32_t sid, security_level_comparison comparison) {
+    BaseCPU * cpu = context->getCpuPtr();
+    auto& port = cpu->getTypedSecPort();
+    auto& secCache = (BaseCache&)port.getCache();
+
+    secCache.add_security_cache_line(sid, static_cast <char>(comparison));
+}
 
 void enum_slevel_tree(security_level* level, const std::function<void(security_level*)>& func, bool above){
     std::queue<security_level*> queue{};
