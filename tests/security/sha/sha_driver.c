@@ -6,8 +6,12 @@
 #include <time.h>
 #include "sha.h"
 
+#include "../security_tools.h"
+
 int main(int argc, char **argv)
 {
+	SWITCH_THREAD(CREATETHREAD());
+
     FILE *fin;
     SHA_INFO sha_info;
 

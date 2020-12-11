@@ -22,20 +22,21 @@ int main(){
 
 	char* buff = (char*)mmap(0, 64 * 1024 * 1024, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	char tmp = 0;
-	uint64_t time, time2;
+	uint64_t time;
 
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
+	printf("Cold start time: %llu cycles\n", time);
 
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
 	}
-	END_TIME(&time2);
-	printf("First time took %lld cycles; second took %lld (second should be much faster)\n", time, time2);
+	END_TIME(&time);
+	printf("Warmed up time: %llu cycles\n", time);
 
 	auto lower = NEW_LOWER();
 
@@ -44,29 +45,47 @@ int main(){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Warmed up took %llu cycles; lower level took %llu (lower should be much slower)\n", time2, time);
+	printf("Cold lowered time: %llu\n", time);
 
-	BEGIN_TIME();
-	for(int i = 0; i < 64 * 1024; i += 64){
-		tmp = buff[i];
-	}
-	END_TIME(&time2);
-	printf("First time at lower took %llu cycles; second took %llu (second should be much faster)\n", time, time2);
-
-	LEVEL_POP();
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Warmed up lower took %llu cycles; back to higher level took %llu (both should be fast)\n", time2, time);
+	printf("Warmed up lowered time: %llu\n", time);
 
-	LOWER(lower);
+	LEVEL_POP();
+	
+	BEGIN_TIME();
+	for(int i = 0; i < 64 * 1024; i += 64){
+		tmp = buff[i];
+	}
+	END_TIME(&time);
+	printf("Still warm, but raised: %llu\n", time);
+
+	int level = GET_LEVEL();
+	NEW_RAISE();
 
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
 	}
-	END_TIME(&time2);
-	printf("Lower again took %llu cycles; higher took %llu (both should be fast)\n", time2, time);
+	END_TIME(&time);
+	printf("Still warm, but raised again: %lld\n", time);
+
+	NEW_LOWER();
+
+	BEGIN_TIME();
+	for(int i = 0; i < 64 * 1024; i += 64){
+		tmp = buff[i];
+	}
+	END_TIME(&time);
+	printf("Lowered but incomparable (cold): %lld\n", time);
+
+	BEGIN_TIME();
+	for(int i = 0; i < 64 * 1024; i += 64){
+		tmp = buff[i];
+	}
+	END_TIME(&time);
+	printf("Lowered but incomparable (warmed up): %lld\n", time);
 }

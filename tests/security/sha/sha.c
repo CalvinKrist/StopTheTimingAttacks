@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "sha.h"
+#include "../security_tools.h"
 
 /* SHA f()-functions */
 
@@ -35,7 +36,7 @@
 
 /* do SHA transformation */
 
-static void sha_transform(SHA_INFO *sha_info)
+static void sha_transform(SHA_INFO *sha_info, int level)
 {
     int i;
     LONG temp, A, B, C, D, E, W[80];
@@ -123,8 +124,10 @@ static void byte_reverse(LONG *buffer, int count)
 
 /* initialize the SHA digest */
 
-void sha_init(SHA_INFO *sha_info)
+void sha_init(SHA_INFO *sha_info, int level)
 {
+    LEVEL_POP();
+
     sha_info->digest[0] = 0x67452301L;
     sha_info->digest[1] = 0xefcdab89L;
     sha_info->digest[2] = 0x98badcfeL;
@@ -132,12 +135,16 @@ void sha_init(SHA_INFO *sha_info)
     sha_info->digest[4] = 0xc3d2e1f0L;
     sha_info->count_lo = 0L;
     sha_info->count_hi = 0L;
+
+    LOWER(level);
 }
 
 /* update the SHA digest */
 
-void sha_update(SHA_INFO *sha_info, BYTE *buffer, int count)
+void sha_update(SHA_INFO *sha_info, BYTE *buffer, int count, int level)
 {
+    LEVEL_POP();
+
     if ((sha_info->count_lo + ((LONG) count << 3)) < sha_info->count_lo) {
 	++sha_info->count_hi;
     }
@@ -153,12 +160,16 @@ void sha_update(SHA_INFO *sha_info, BYTE *buffer, int count)
 	count -= SHA_BLOCKSIZE;
     }
     memcpy(sha_info->data, buffer, count);
+
+    LOWER(level);
 }
 
 /* finish computing the SHA digest */
 
-void sha_final(SHA_INFO *sha_info)
+void sha_final(SHA_INFO *sha_info, int level)
 {
+    LEVEL_POP();
+
     int count;
     LONG lo_bit_count, hi_bit_count;
 
@@ -182,6 +193,8 @@ void sha_final(SHA_INFO *sha_info)
     sha_info->data[14] = hi_bit_count;
     sha_info->data[15] = lo_bit_count;
     sha_transform(sha_info);
+
+    LOWER(level);
 }
 
 /* compute the SHA digest of a FILE stream */
@@ -193,11 +206,15 @@ void sha_stream(SHA_INFO *sha_info, FILE *fin)
     int i;
     BYTE data[BLOCK_SIZE];
 
-    sha_init(sha_info);
+    int level = (int) GET_LEVEL();
+    NEW_RAISE(); // Create new higher level
+    LOWER(level); // Push higher level to stack, return back to the lower level.
+
+    sha_init(sha_info, level);
     while ((i = fread(data, 1, BLOCK_SIZE, fin)) > 0) {
-	sha_update(sha_info, data, i);
+	sha_update(sha_info, data, i, level);
     }
-    sha_final(sha_info);
+    sha_final(sha_info, level);
 }
 
 /* print a SHA digest */

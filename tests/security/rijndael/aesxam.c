@@ -41,6 +41,8 @@
 #include <memory.h>
 #include <ctype.h>
 
+#include "../security_tools.h"
+
 #include "aes.h"
 
 /* A Pseudo Random Number Generator (PRNG) used for the     */
@@ -232,7 +234,11 @@ int decfile(FILE *fin, FILE *fout, aes *ctx, char* ifn, char* ofn)
 }
 
 int main(int argc, char *argv[])
-{   FILE    *fin = 0, *fout = 0;
+{
+    SWITCH_THREAD(CREATETHREAD());
+    auto level = GET_LEVEL();
+
+    FILE    *fin = 0, *fout = 0;
     char    *cp, ch, key[32];
     int     i=0, by=0, key_len=0, err = 0;
     aes     ctx[1];
@@ -246,6 +252,7 @@ int main(int argc, char *argv[])
     cp = argv[4];   /* this is a pointer to the hexadecimal key digits  */
     i = 0;          /* this is a count for the input digits processed   */
     
+    NEW_RAISE();
     while(i < 64 && *cp)    /* the maximum key length is 32 bytes and   */
     {                       /* hence at most 64 hexadecimal digits      */
         ch = toupper(*cp++);            /* process a hexadecimal digit  */
@@ -263,6 +270,7 @@ int main(int argc, char *argv[])
         if(i++ & 1) 
             key[i / 2 - 1] = by & 0xff; 
     }
+    LOWER(level);
 
     if(*cp)
     {
@@ -289,6 +297,7 @@ int main(int argc, char *argv[])
         err = -6; goto exit;
     }
 
+    NEW_RAISE();
     if(toupper(*argv[3]) == 'E')
     {                           /* encryption in Cipher Block Chaining mode */
         set_key(key, key_len, enc, ctx);
@@ -301,6 +310,8 @@ int main(int argc, char *argv[])
     
         err = decfile(fin, fout, ctx, argv[1], argv[2]);
     }
+    LOWER(level);
+
 exit:   
     if(fout) 
         fclose(fout);
