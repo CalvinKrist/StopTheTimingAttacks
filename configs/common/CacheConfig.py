@@ -137,7 +137,7 @@ def config_cache(options, system):
                                   assoc=options.l1i_assoc)
             dcache = dcache_class(size=options.l1d_size,
                                   assoc=options.l1d_assoc)
-            seccache = icache_class(size='32768B')
+            seccache = dcache_class(size='512B', assoc=512)
 
             # If we have a walker cache specified, instantiate two
             # instances here
