@@ -1037,6 +1037,10 @@ BaseCache::add_security_cache_line(uint32_t level, char comparison)
     blk->data = (uint8_t*)(new char(comparison));
 }
 
+CacheBlk* BaseCache::getBlock(Addr addr, bool isSecure){ 
+    return tags->findBlock(addr, isSecure);
+}
+
 bool
 BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles& security_latency)
 {
