@@ -1030,6 +1030,8 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
 }
 
 #include <iostream>
+#include "mem/cache/tags/base_set_assoc.hh"
+
 bool
 BaseCache::add_security_cache_line(uint32_t level, char comparison)
 {
@@ -1045,6 +1047,8 @@ BaseCache::add_security_cache_line(uint32_t level, char comparison)
     std::cout << "Block is already valid? " << blk->isValid() << std::endl;
     blk->insert(tags->extractTag(level), false, 0, 0);
     blk->data = (uint8_t*)(new char(comparison));
+    blk->refCount++;
+    ((BaseSetAssoc*) tags)->replacementPolicy->touch(blk->replacementData);
     return true;
 }
 

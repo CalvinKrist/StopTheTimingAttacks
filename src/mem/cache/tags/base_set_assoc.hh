@@ -81,10 +81,10 @@ class BaseSetAssoc : public BaseTags
     /** Whether tags and data are accessed sequentially. */
     const bool sequentialAccess;
 
+  public:
     /** Replacement policy */
     BaseReplacementPolicy *replacementPolicy;
 
-  public:
     /** Convenience typedef. */
      typedef BaseSetAssocParams Params;
 

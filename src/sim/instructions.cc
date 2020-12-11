@@ -58,6 +58,7 @@ struct inode_list {
         } else if(count <= C - 2){
             return directs[--count];
         } else{
+	    count--;
             return indirect->pop();
         }
     }
@@ -73,16 +74,16 @@ struct thread_ref;
 
 struct security_level { // 128 bytes
     uint32_t identifier;
-    inode_list<thread_ref> threads;
-    inode_list<security_level, 15> below;
-    inode_list<security_level> above;
+    inode_list<thread_ref, 8, 2> threads;
+    inode_list<security_level, 15, 2> below;
+    inode_list<security_level, 8, 2> above;
     security_level(uint32_t identifier) : identifier{ identifier }{}
 }; // 32 per page, 5 bits
 
 struct thread_ref { // 128 bytes
     uint32_t identifier;
-    inode_list<security_level> stack;
-    inode_list<security_level, 22> references;
+    inode_list<security_level, 8, 2> stack;
+    inode_list<security_level, 22, 2> references;
     thread_ref(uint32_t identifier) : identifier{ identifier }{}
 }; // 32 per page, 5 bits
 
@@ -244,14 +245,25 @@ void enum_slevel_tree(security_level* level, const std::function<void(security_l
     while(!queue.empty()){
         auto at = queue.front();
         queue.pop();
-        for(uint32_t i = 0; i < above ? at->above.count : at->below.count; i++){
-            auto nlevel = above ? at->above[i] : at->below[i];
-            if(set.find(nlevel->identifier) == set.end()){
-                set.emplace(nlevel->identifier);
-                queue.emplace(nlevel);
-                func(nlevel);
+        if(above){
+	    for(uint32_t i = 0; i < at->above.count; i++){
+                auto nlevel = at->above[i];
+                if(set.find(nlevel->identifier) == set.end()){
+                    set.emplace(nlevel->identifier);
+                    queue.emplace(nlevel);
+                    func(nlevel);
+                }
             }
-        }
+	} else {
+	    for(uint32_t i = 0; i < at->below.count; i++){
+	        auto nlevel = at->below[i];
+		if(set.find(nlevel->identifier) == set.end()){
+		    set.emplace(nlevel->identifier);
+		    queue.emplace(nlevel);
+		    func(nlevel);
+		}
+	    }
+	}
     }
 }
 
