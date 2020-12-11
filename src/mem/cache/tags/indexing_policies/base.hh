@@ -62,7 +62,7 @@ class ReplaceableEntry;
  */
 class BaseIndexingPolicy : public SimObject
 {
-  protected:
+  public:
     /**
      * The associativity.
      */
