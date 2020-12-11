@@ -309,6 +309,10 @@ class BaseCache : public ClockedObject
 
     };
 
+    public:
+        void add_security_cache_line(uint32_t level, char comparison);
+    protected:
+
     CpuSidePort cpuSidePort;
     MemSidePort memSidePort;
 
