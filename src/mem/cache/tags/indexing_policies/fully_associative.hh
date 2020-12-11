@@ -50,7 +50,7 @@
 #include <vector>
 
 #include "mem/cache/tags/indexing_policies/base.hh"
-#include "params/SetAssociative.hh"
+#include "params/FullyAssociative.hh"
 
 class FullyAssociative : public BaseIndexingPolicy
 {

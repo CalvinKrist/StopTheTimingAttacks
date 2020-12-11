@@ -47,6 +47,7 @@ import m5
 from common import ObjectList
 from m5.objects import *
 from common.Caches import *
+from m5.objects.IndexingPolicies import *
 
 
 def config_cache(options, system):
@@ -137,7 +138,9 @@ def config_cache(options, system):
                                   assoc=options.l1i_assoc)
             dcache = dcache_class(size=options.l1d_size,
                                   assoc=options.l1d_assoc)
-            seccache = dcache_class(size='512B', assoc=512)
+            seccache = dcache_class(assoc=512)
+
+            seccache.tags.indexing_policy = FullyAssociative()
 
             # If we have a walker cache specified, instantiate two
             # instances here
