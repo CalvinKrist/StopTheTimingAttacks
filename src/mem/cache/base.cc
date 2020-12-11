@@ -127,6 +127,7 @@ BaseCache::BaseCache(const BaseCacheParams *p, unsigned blk_size)
 
 BaseCache::~BaseCache()
 {
+    std::cout << "deleting cache " << name() << std::endl;
     delete tempBlock;
 }
 
@@ -1031,12 +1032,14 @@ BaseCache::calculateAccessLatency(const CacheBlk* blk, const uint32_t delay,
 bool
 BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles security_latency)
 {
-    auto& cpu = (BaseCPU&) cpuSidePort.getCpu();
-    auto& port = cpu.getTypedSecPort();
-    // auto& secCache = port.getCache();
+    auto threads = system->threads;
+    ThreadContext* context = threads[0];
+    BaseCPU * cpu = context->getCpuPtr();
+    auto& port = cpu->getTypedSecPort();
+    auto& secCache = (BaseCache&)port.getCache();
 
     auto their_sec_level = found_block->security_level;
-    // auto my_sec_level = cpu.getContext(0)->readIntReg(ThreadContext::SID_REG);
+    auto my_sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG);
 
     auto comparison_result = 0; // TODO: compare security levels in the sec cache
 
@@ -1500,11 +1503,12 @@ BaseCache::allocateBlock(const PacketPtr pkt, PacketList &writebacks)
     }
 
     // Insert new block at victimized entry
-    auto& cpu = (BaseCPU&) cpuSidePort.getCpu();
-    // auto thread_context = cpu.getContext(0);
-    // std::cout << "Retrieved thread context as " << thread_context << std::endl;
-    //auto sec_level = thread_context ? thread_context->readIntReg(ThreadContext::SID_REG) : 0; 
-    tags->insertBlock(pkt, victim, 0);
+    auto threads = system->threads;
+    ThreadContext* context = threads[0];
+    BaseCPU * cpu = context->getCpuPtr();
+    auto thread_context = cpu->getContext(0);
+    auto sec_level = thread_context ? thread_context->readIntReg(ThreadContext::SID_REG) : 0; 
+    tags->insertBlock(pkt, victim, sec_level);
 
     return victim;
 }
