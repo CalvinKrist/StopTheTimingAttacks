@@ -231,11 +231,26 @@ void flush_security_cache(INST_COMMON_PARAMS){
 
     secCache.memInvalidate();
 }
+
+#include <iostream>
+
 void add_security_cache_line(INST_COMMON_PARAMS, uint32_t sid, security_level_comparison comparison) {
     BaseCPU * cpu = context->getCpuPtr();
     auto& port = cpu->getTypedSecPort();
     auto& secCache = (BaseCache&)port.getCache();
 
+    auto msid = static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG));
+
+    std::cout << "Adding entry to security comparison cache: ";
+
+    if(comparison == security_level_comparison::same){
+	    std::cout << sid << " is " << msid << std::endl;
+    } else if(comparison == security_level_comparison::lower){
+	    std::cout << sid << " is lower than " << msid << std::endl;
+    } else {
+	    std::cout << sid << " is higher than " << msid << std::endl;
+    }
+    
     if(!secCache.add_security_cache_line(sid, static_cast <char>(comparison))){
         panic("Unable to add line to security comparison cache!!");
     }
@@ -525,6 +540,9 @@ uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach)
     return 0;
 }
 
-uint32_t inst_GETLEVEL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
-    return static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG));
+uint32_t inst_GETLEVEL(INST_COMMON_PARAMS, uint32_t cycles, UNUSED_INST_PARAM){
+    if(cycles)
+        return static_cast<uint32_t>((uint64_t) context->getCpuPtr()->curCycle());
+    else
+	return static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG));
 }

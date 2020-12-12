@@ -808,8 +808,8 @@ BaseCache::handleEvictions(std::vector<CacheBlk*> &evict_blks,
             if (mshr) {
                 // Must be an outstanding upgrade or clean request on a block
                 // we're about to replace
-                assert((!blk->isWritable() && mshr->needsWritable()) ||
-                       mshr->isCleaning());
+                //assert((!blk->isWritable() && mshr->needsWritable()) ||
+                //       mshr->isCleaning());
                 return false;
             }
         }
@@ -1125,8 +1125,12 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
 
     // Access block in the tags
     Cycles tag_latency(0);
-    blk = tags->accessBlock(pkt->getAddr(), pkt->isSecure(), tag_latency);
-    blk = allowed ? blk : nullptr; 
+    blk = nullptr;
+    if(allowed){
+        blk = tags->accessBlock(pkt->getAddr(), pkt->isSecure(), tag_latency);
+    } else {
+        tag_latency = tags->lookupLatency;
+    }
     tag_latency += security_latency;
 
     /* that's all, folks! */
@@ -1358,8 +1362,8 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
             lat = calculateTagOnlyLatency(pkt->headerDelay, tag_latency);
         }
 
-        if(allowed) satisfyRequest(pkt, blk);
-        if(allowed) maintainClusivity(pkt->fromCache(), blk);
+        satisfyRequest(pkt, blk);
+        maintainClusivity(pkt->fromCache(), blk);
 
         return true;
     }
@@ -2604,3 +2608,5 @@ WriteAllocatorParams::create()
 {
     return new WriteAllocator(this);
 }
+
+

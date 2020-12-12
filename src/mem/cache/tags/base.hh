@@ -79,9 +79,12 @@ class BaseTags : public ClockedObject
     const Addr blkMask;
     /** The size of the cache. */
     const unsigned size;
+  
+  public:
     /** The tag lookup latency of the cache. */
     const Cycles lookupLatency;
 
+  protected:
     /** System we are currently operating in. */
     System *system;
   public:

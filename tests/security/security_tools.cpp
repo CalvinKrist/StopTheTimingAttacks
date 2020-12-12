@@ -29,14 +29,14 @@ int main(){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Cold start time: %llu cycles\n", time);
+	printf("%d\tCold start time: %llu cycles\n", GET_LEVEL(), time);
 
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Warmed up time: %llu cycles\n", time);
+	printf("%d\tWarmed up time: %llu cycles\n", GET_LEVEL(), time);
 
 	auto lower = NEW_LOWER();
 
@@ -45,14 +45,14 @@ int main(){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Cold lowered time: %llu\n", time);
+	printf("%d\tCold lowered time: %llu\n", GET_LEVEL(), time);
 
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Warmed up lowered time: %llu\n", time);
+	printf("%d\tWarmed up lowered time: %llu\n", GET_LEVEL(), time);
 
 	LEVEL_POP();
 	
@@ -61,9 +61,8 @@ int main(){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Still warm, but raised: %llu\n", time);
+	printf("%d\tStill warm, but raised: %llu\n", GET_LEVEL(), time);
 
-	int level = GET_LEVEL();
 	NEW_RAISE();
 
 	BEGIN_TIME();
@@ -71,7 +70,7 @@ int main(){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Still warm, but raised again: %lld\n", time);
+	printf("%d\tStill warm, but raised again: %lld\n", GET_LEVEL(), time);
 
 	NEW_LOWER();
 
@@ -80,12 +79,12 @@ int main(){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Lowered but incomparable (cold): %lld\n", time);
+	printf("%d\tLowered but incomparable (cold): %lld\n", GET_LEVEL(), time);
 
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
 	}
 	END_TIME(&time);
-	printf("Lowered but incomparable (warmed up): %lld\n", time);
+	printf("%d\tLowered but incomparable (warmed up): %lld\n", GET_LEVEL(), time);
 }

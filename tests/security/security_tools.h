@@ -43,11 +43,17 @@ enum class InstructionID {
 #define GET_LEVEL() \
     lseek(0x40000000 | static_cast<int>(InstructionID::GETLEVEL), 0, 0)
 
-#define BEGIN_TIME()          \
-	{                         \
-		auto __t = __rdtsc();
+#define GET_CYCLES() \
+    lseek(0x40000000 | static_cast<int>(InstructionID::GETLEVEL), 1, 0)
 
-#define END_TIME(ptr)           \
-        *ptr = __rdtsc() - __t; \
+#define BEGIN_TIME()                       \
+	{                                  \
+		uint32_t __t1;             \
+		__rdtscp(&__t1);           \
+		auto __t = __rdtscp(&__t1);
+
+#define END_TIME(ptr)                 \
+	__rdtscp(&__t1);              \
+        *ptr = __rdtscp(&__t1) - __t; \
     }
 	
