@@ -235,7 +235,9 @@ void add_security_cache_line(INST_COMMON_PARAMS, uint32_t sid, security_level_co
     auto& port = cpu->getTypedSecPort();
     auto& secCache = (BaseCache&)port.getCache();
 
-    secCache.add_security_cache_line(sid, static_cast <char>(comparison));
+    if(!secCache.add_security_cache_line(sid, static_cast <char>(comparison))){
+        panic("Unable to add line to security comparison cache!!");
+    }
 }
 
 void enum_slevel_tree(security_level* level, const std::function<void(security_level*)>& func, bool above){
@@ -246,7 +248,7 @@ void enum_slevel_tree(security_level* level, const std::function<void(security_l
         auto at = queue.front();
         queue.pop();
         if(above){
-	    for(uint32_t i = 0; i < at->above.count; i++){
+            for(uint32_t i = 0; i < at->above.count; i++){
                 auto nlevel = at->above[i];
                 if(set.find(nlevel->identifier) == set.end()){
                     set.emplace(nlevel->identifier);
@@ -254,16 +256,16 @@ void enum_slevel_tree(security_level* level, const std::function<void(security_l
                     func(nlevel);
                 }
             }
-	} else {
-	    for(uint32_t i = 0; i < at->below.count; i++){
-	        auto nlevel = at->below[i];
-		if(set.find(nlevel->identifier) == set.end()){
-		    set.emplace(nlevel->identifier);
-		    queue.emplace(nlevel);
-		    func(nlevel);
-		}
-	    }
-	}
+        } else{
+            for(uint32_t i = 0; i < at->below.count; i++){
+                auto nlevel = at->below[i];
+                if(set.find(nlevel->identifier) == set.end()){
+                    set.emplace(nlevel->identifier);
+                    queue.emplace(nlevel);
+                    func(nlevel);
+                }
+            }
+        }
     }
 }
 
@@ -421,8 +423,11 @@ uint32_t inst_LOWERNSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM)
 
     cur_level->below.push(new_level);
     new_level->above.push(cur_level);
-    new_level->threads.push(thread);
-    thread->references.push(new_level);
+
+    for(int i = 0; i < cur_level->threads.count; i++){
+        new_level->threads.push(cur_level->threads[i]);
+        cur_level->threads[i]->references.push(new_level);
+    }
 
     thread->stack.push(new_level);
 
@@ -449,6 +454,7 @@ uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
 }
 
 uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
+    __debugbreak();
     auto new_level = lookup_sid(context, create_sid(context));
     auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG)));
     auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::TID_REG)));
@@ -458,6 +464,7 @@ uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM)
 
     cur_level->above.push(new_level);
     new_level->below.push(cur_level);
+
     new_level->threads.push(thread);
     thread->references.push(new_level);
 
@@ -500,6 +507,18 @@ uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach)
 
     attach_to_level->below.push(to_attach_level);
     to_attach_level->above.push(attach_to_level);
+
+    enum_slevel_tree(to_attach_level, [to_attach_level](security_level* nlevel){
+        for(int i = 0; i < to_attach_level->threads.count; i++){
+            nlevel->threads.push(to_attach_level->threads[i]);
+            to_attach_level->threads[i]->references.push(nlevel);
+        }
+    }, false);
+
+    for(int i = 0; i < cur_level->threads.count; i++){
+        to_attach_level->threads.push(attach_to_level->threads[i]);
+        attach_to_level->threads[i]->references.push(to_attach_level);
+    }
 
     prep_security_cache(context);
 
