@@ -455,7 +455,6 @@ uint32_t inst_RAISESL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
 }
 
 uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
-    __debugbreak();
     auto new_level = lookup_sid(context, create_sid(context));
     auto cur_level = lookup_sid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG)));
     auto thread = lookup_tid(context, static_cast<uint32_t>(context->readIntReg(ThreadContext::TID_REG)));
@@ -516,7 +515,7 @@ uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach)
         }
     }, false);
 
-    for(int i = 0; i < cur_level->threads.count; i++){
+    for(int i = 0; i < attach_to_level->threads.count; i++){
         to_attach_level->threads.push(attach_to_level->threads[i]);
         attach_to_level->threads[i]->references.push(to_attach_level);
     }

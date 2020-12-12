@@ -133,3 +133,10 @@ uint32_t inst_RAISENSL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM)
  *         0 if the new relationship was successfully defined
  */
 uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach);
+
+/**
+ * \brief Retrieves the current thread's security level
+ *
+ * \return The current thread's security level identifier
+ */
+uint32_t inst_GETLEVEL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM);

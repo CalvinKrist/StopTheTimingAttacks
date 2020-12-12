@@ -1038,13 +1038,9 @@ BaseCache::add_security_cache_line(uint32_t level, char comparison)
     std::vector<CacheBlk*> evicted;
     CacheBlk *blk = tags->findVictim(level, false, blkSize * 8, evicted);
     if(!blk){
-	std::cerr << "Failed to insert cache line!" << std::endl;
         return false;
     }
 
-    std::cout << "Adding " << level << ": " << (int) comparison << " to the cache" << std::endl;
-    std::cout << "Cache tag: " << tags->extractTag(level) << " for " << level << std::endl;
-    std::cout << "Block is already valid? " << blk->isValid() << std::endl;
     blk->insert(tags->extractTag(level), false, 0, 0);
     blk->data = (uint8_t*)(new char(comparison));
     blk->refCount++;
@@ -1073,11 +1069,9 @@ BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles& security
     uint32_t my_sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG);
 
     auto blk = secCache.getBlock(their_sec_level, false);
-    auto comparison_result = 3; // TODO: compare security levels in the sec cache
+    auto comparison_result = 3;
     if(blk){
         comparison_result = *blk->data;
-    } else if(their_sec_level != 0){
-	std::cout << "Failed looking up " << their_sec_level << std::endl;
     }
 
     if(my_sec_level == 0 && their_sec_level != 0){
