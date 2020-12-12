@@ -7,7 +7,7 @@
 
 #include "mem/cache/base.hh"
 
-InstructionFunc instructions[9]{
+InstructionFunc instructions[10]{
 	inst_CREATETHREAD,
 	inst_CREATETHREADWITHSID,
 	inst_DELETETHREAD,
@@ -16,7 +16,8 @@ InstructionFunc instructions[9]{
 	inst_LOWERNSL,
 	inst_RAISESL,
 	inst_RAISENSL,
-	inst_ATTACH
+	inst_ATTACH,
+    inst_GETLEVEL
 };
 
 template<class T, unsigned int C = 8, unsigned int G = 2>
@@ -523,4 +524,8 @@ uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach)
     prep_security_cache(context);
 
     return 0;
+}
+
+uint32_t inst_GETLEVEL(INST_COMMON_PARAMS, UNUSED_INST_PARAM, UNUSED_INST_PARAM){
+    return static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG));
 }

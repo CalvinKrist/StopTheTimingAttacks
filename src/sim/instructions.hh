@@ -11,12 +11,13 @@ enum class InstructionID {
 	LOWERNSL = 5,
 	RAISESL = 6,
 	RAISENSL = 7,
-	ATTACH = 8
+	ATTACH = 8,
+	GETLEVEL = 9
 };
 
 typedef uint32_t(*InstructionFunc)(ThreadContext*, uint32_t, uint32_t);
 
-extern InstructionFunc instructions[9];
+extern InstructionFunc instructions[10];
 
 #define UNUSED_INST_PARAM uint32_t
 #define INST_COMMON_PARAMS ThreadContext* context
