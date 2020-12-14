@@ -6,7 +6,7 @@
 #include <time.h>
 #include "sha.h"
 
-#include "../security_tools.h"
+#include "../security_tools_gcc.h"
 
 int main(int argc, char **argv)
 {

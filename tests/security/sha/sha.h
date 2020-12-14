@@ -18,9 +18,9 @@ typedef struct {
     LONG data[16];		/* SHA data buffer */
 } SHA_INFO;
 
-void sha_init(SHA_INFO *);
-void sha_update(SHA_INFO *, BYTE *, int);
-void sha_final(SHA_INFO *);
+void sha_init(SHA_INFO *, int level);
+void sha_update(SHA_INFO *, BYTE *, int count, int level);
+void sha_final(SHA_INFO *, int level);
 
 void sha_stream(SHA_INFO *, FILE *);
 void sha_print(SHA_INFO *);

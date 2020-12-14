@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "sha.h"
-#include "../security_tools.h"
+#include "../security_tools_gcc.h"
 
 /* SHA f()-functions */
 
@@ -36,7 +36,7 @@
 
 /* do SHA transformation */
 
-static void sha_transform(SHA_INFO *sha_info, int level)
+static void sha_transform(SHA_INFO *sha_info)
 {
     int i;
     LONG temp, A, B, C, D, E, W[80];
