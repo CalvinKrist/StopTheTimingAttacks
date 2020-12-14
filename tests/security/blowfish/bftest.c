@@ -63,6 +63,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "blowfish.h"
+#include "security_tools.h"
 
 char *bf_key[2]={
 	"abcdefghijklmnopqrstuvwxyz",
@@ -324,6 +325,8 @@ int main(argc,argv)
 int argc;
 char *argv[];
 	{
+
+	SWITCH_THREAD(CREATETHREAD());
 	int ret;
 
 	if (argc > 1)
@@ -336,6 +339,9 @@ char *argv[];
 
 int test()
 	{
+	int level = (int) GET_LEVEL();
+    NEW_RAISE(); // Create new higher level
+
 	unsigned char cbc_in[40],cbc_out[40],iv[8];
 	int i,n,err=0;
 	BF_KEY key;
@@ -382,6 +388,10 @@ int test()
 			err=1;
 			}
 		}
+	LOWER(level);
+
+	level = (int)NEW_LOWER();
+	NEW_RAISE(); // Create new higher level
 
 	printf("testing blowfish in ecb mode\n");
 
@@ -420,6 +430,7 @@ int test()
 			}
 		}
 
+
 	printf("testing blowfish set_key\n");
 	for (n=1; n<KEY_TEST_NUM; n++)
 		{
@@ -431,6 +442,11 @@ int test()
 			err=1;
 			}
 		}
+
+	LOWER(level);
+
+	level = (int)NEW_LOWER();
+	NEW_RAISE(); // Create new higher level
 
 	printf("testing blowfish in cbc mode\n");
 	len=strlen(cbc_data)+1;
@@ -455,6 +471,11 @@ int test()
 		printf("BF_cbc_encrypt decrypt error\n");
 		err=1;
 		}
+
+	LOWER(level);
+
+	level = (int)NEW_LOWER();
+	NEW_RAISE(); // Create new higher level
 
 	printf("testing blowfish in cfb64 mode\n");
 
@@ -485,6 +506,11 @@ int test()
 		err=1;
 		}
 
+	LOWER(level);
+
+	level = (int)NEW_LOWER();
+	NEW_RAISE(); // Create new higher level
+
 	printf("testing blowfish in ofb64\n");
 
 	BF_set_key(&key,16,cbc_key);
@@ -510,6 +536,8 @@ int test()
 		printf("BF_ofb64_encrypt decrypt error\n");
 		err=1;
 		}
+
+	LOWER(level);
 
 	return(err);
 	}

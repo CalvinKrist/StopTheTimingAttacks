@@ -135,6 +135,8 @@
 #include "rsaglue.h"
 #include "noise.h"
 
+#include "security_tools.h"
+
 #ifdef MACTC5
 #include "Macutil.h"
 #include "Macutil2.h"
@@ -599,6 +601,12 @@ int pgp_dispatch(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+
+    SWITCH_THREAD(CREATETHREAD());
+
+    int level = (int) GET_LEVEL();
+    NEW_RAISE(); // Create new higher level
+
     int status, opt;
     char *inputfile = NULL;
     char **recipient = NULL;
@@ -1452,6 +1460,9 @@ LANG("\nA user ID is required to select the recipient's public key. "));
 #ifdef MACTC5
 }				/* pgp_dispatch */
 #else
+
+  LOWER(level);
+
 }				/* main */
 #endif
 
