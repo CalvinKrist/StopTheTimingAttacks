@@ -1,5 +1,7 @@
 #pragma once
 
+#include "unistd.h"
+
 enum class InstructionID {
 	CREATETHREAD = 0,
 	CREATETHREADWITHSID = 1,

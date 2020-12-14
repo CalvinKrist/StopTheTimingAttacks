@@ -63,7 +63,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "blowfish.h"
-#include "security_tools.h"
+#include "../security_tools_gcc.h"
 
 char *bf_key[2]={
 	"abcdefghijklmnopqrstuvwxyz",
@@ -83,7 +83,7 @@ BF_LONG bf_cipher[2][2]={
 /************/
 
 /* Lets use the DES test vectors :-) */
-#define NUM_TESTS 34
+#define NUM_TESTS 1
 static unsigned char ecb_data[NUM_TESTS][8]={
 	{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
 	{0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF},
@@ -321,22 +321,6 @@ int print_test_data()
 	return(0);
 	}
 
-int main(argc,argv)
-int argc;
-char *argv[];
-	{
-
-	SWITCH_THREAD(CREATETHREAD());
-	int ret;
-
-	if (argc > 1)
-		ret=print_test_data();
-	else
-		ret=test();
-
-	exit(ret);
-	}
-
 int test()
 	{
 	int level = (int) GET_LEVEL();
@@ -349,15 +333,17 @@ int test()
 	unsigned char out[8]; 
 	unsigned long len;
 
-	printf("testing blowfish in raw ecb mode\n");
+	//printf("testing blowfish in raw ecb mode\n");
 	for (n=0; n<2; n++)
 		{
 		BF_set_key(&key,strlen(bf_key[n]),(unsigned char *)bf_key[n]);
-	printf("Set key.\n");
+		//printf("Set key.\n");
 		data[0]=bf_plain[n][0];
 		data[1]=bf_plain[n][1];
+		
 		BF_encrypt(data,&key,BF_ENCRYPT);
-		printf("Encrypted.\n");
+		
+		
 		if (memcmp(&(bf_cipher[n][0]),&(data[0]),8) != 0)
 			{
 			printf("BF_encrypt error encrypting\n");
@@ -372,8 +358,11 @@ int test()
 			printf("\n");
 			}
 
+		
 		BF_encrypt(&(data[0]),&key,BF_DECRYPT);
-		printf("decrypted.\n");
+		
+		
+		//printf("decrypted.\n");
 		if (memcmp(&(bf_plain[n][0]),&(data[0]),8) != 0)
 			{
 			printf("BF_encrypt error decrypting\n");
@@ -388,18 +377,22 @@ int test()
 			err=1;
 			}
 		}
+	
 	LOWER(level);
 
 	level = (int)NEW_LOWER();
 	NEW_RAISE(); // Create new higher level
 
-	printf("testing blowfish in ecb mode\n");
+	//printf("testing blowfish in ecb mode\n");
 
 	for (n=0; n<NUM_TESTS; n++)
 		{
 		BF_set_key(&key,8,ecb_data[n]);
 
+		
 		BF_ecb_encrypt(&(plain_data[n][0]),out,&key,BF_ENCRYPT);
+		
+		
 		if (memcmp(&(cipher_data[n][0]),out,8) != 0)
 			{
 			printf("BF_ecb_encrypt blowfish error encrypting\n");
@@ -414,7 +407,10 @@ int test()
 			printf("\n");
 			}
 
+		
 		BF_ecb_encrypt(out,out,&key,BF_DECRYPT);
+		
+		
 		if (memcmp(&(plain_data[n][0]),out,8) != 0)
 			{
 			printf("BF_ecb_encrypt error decrypting\n");
@@ -430,8 +426,7 @@ int test()
 			}
 		}
 
-
-	printf("testing blowfish set_key\n");
+	//printf("testing blowfish set_key\n");
 	for (n=1; n<KEY_TEST_NUM; n++)
 		{
 		BF_set_key(&key,n,key_test);
@@ -448,15 +443,18 @@ int test()
 	level = (int)NEW_LOWER();
 	NEW_RAISE(); // Create new higher level
 
-	printf("testing blowfish in cbc mode\n");
+	//printf("testing blowfish in cbc mode\n");
 	len=strlen(cbc_data)+1;
 
 	BF_set_key(&key,16,cbc_key);
 	memset(cbc_in,0,40);
 	memset(cbc_out,0,40);
 	memcpy(iv,cbc_iv,8);
+	
 	BF_cbc_encrypt((unsigned char *)cbc_data,cbc_out,len,
 		&key,iv,BF_ENCRYPT);
+	
+	
 	if (memcmp(cbc_out,cbc_ok,32) != 0)
 		{
 		err=1;
@@ -464,8 +462,11 @@ int test()
 		for (i=0; i<32; i++) printf("0x%02X,",cbc_out[i]);
 		}
 	memcpy(iv,cbc_iv,8);
+	
 	BF_cbc_encrypt(cbc_out,cbc_in,len,
 		&key,iv,BF_DECRYPT);
+	
+	
 	if (memcmp(cbc_in,cbc_data,strlen(cbc_data)+1) != 0)
 		{
 		printf("BF_cbc_encrypt decrypt error\n");
@@ -477,7 +478,7 @@ int test()
 	level = (int)NEW_LOWER();
 	NEW_RAISE(); // Create new higher level
 
-	printf("testing blowfish in cfb64 mode\n");
+	//printf("testing blowfish in cfb64 mode\n");
 
 	BF_set_key(&key,16,cbc_key);
 	memset(cbc_in,0,40);
@@ -511,7 +512,7 @@ int test()
 	level = (int)NEW_LOWER();
 	NEW_RAISE(); // Create new higher level
 
-	printf("testing blowfish in ofb64\n");
+	//printf("testing blowfish in ofb64\n");
 
 	BF_set_key(&key,16,cbc_key);
 	memset(cbc_in,0,40);
@@ -540,4 +541,20 @@ int test()
 	LOWER(level);
 
 	return(err);
+	}
+
+int main(int argc, char*argv[])
+	{
+	SWITCH_THREAD(CREATETHREAD());
+	int ret;
+
+	if (argc > 1)
+		ret=print_test_data();
+	else {
+		for(int i = 0; i < 1000; i++) 
+			ret=test();
+	}
+
+	printf("Ran 1000 times.\n");
+	exit(ret);
 	}
