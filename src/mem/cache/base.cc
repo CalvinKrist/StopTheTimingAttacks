@@ -1055,57 +1055,6 @@ CacheBlk* BaseCache::getBlock(Addr addr, bool isSecure){
 }
 
 bool
-BaseCache::checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles& security_latency)
-{
-    if(!found_block){
-        return true;
-    }
-
-    auto threads = system->threads;
-    ThreadContext* context = threads[0];
-    BaseCPU * cpu = context->getCpuPtr();
-    auto& port = cpu->getTypedSecPort();
-    auto& secCache = (BaseCache&)port.getCache();
-
-    uint32_t their_sec_level = found_block->security_level;
-    uint32_t my_sec_level = cpu->getContext(0)->readIntReg(ThreadContext::SID_REG);
-
-    auto blk = secCache.getBlock(their_sec_level, false);
-    auto comparison_result = 3;
-    if(blk){
-        comparison_result = *blk->data;
-    }
-
-    if(my_sec_level == 0 && their_sec_level != 0){
-        comparison_result = 2;
-    } else if(my_sec_level != 0 && their_sec_level == 0){
-        comparison_result = 1;
-    } else if(my_sec_level == 0 && their_sec_level == 0){
-        comparison_result = 0;
-    }
-
-    DPRINTF(Cache, "Theirs: %d; Mine: %d; Comparison: %d\n", their_sec_level, my_sec_level, comparison_result);
-
-    security_latency += Cycles(1);
-
-    if(comparison_result == 0)
-        return true;
-
-    bool isEvict = pkt->isWrite() || pkt->isEviction() || pkt->isWriteback();
-    bool isRead = pkt->isRead();
-    bool isFlush = pkt->isFlush();
-
-    if(comparison_result == 1 && isEvict)
-        return false;
-    if(comparison_result == 2 && (isRead || isFlush))
-        return false;
-    if(comparison_result == 3 && (isRead || isFlush))
-        return false;
-
-    return true;
-}
-
-bool
 BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                   PacketList &writebacks)
 {
@@ -1118,23 +1067,19 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                   name());
 
     /* BEGIN 6501 CHANGES :) */
-    auto found_block = tags->findBlock(pkt->getAddr(), pkt->isSecure());
-    Cycles security_latency(0);
+    // auto found_block = tags->findBlock(pkt->getAddr(), pkt->isSecure());
+    // Cycles security_latency(0);
 
-    bool allowed = true;
-    if (useSecLevels) {
-        allowed = checkSecurity(found_block, pkt, security_latency);
-    }
+    // bool allowed = true;
+    // if (useSecLevels) {
+    //     allowed = checkSecurity(found_block, pkt, security_latency);
+    // }
 
     // Access block in the tags
     Cycles tag_latency(0);
-    blk = nullptr;
-    if(allowed){
-        blk = tags->accessBlock(pkt->getAddr(), pkt->isSecure(), tag_latency);
-    } else {
-        tag_latency = tags->lookupLatency;
-    }
-    tag_latency += security_latency;
+    tags->lastPkt = pkt;
+    blk = tags->accessBlock(pkt->getAddr(), pkt->isSecure(), tag_latency);
+    //tag_latency += security_latency;
 
     /* that's all, folks! */
 
@@ -1312,7 +1257,7 @@ BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
 
                 blk->status |= BlkReadable;
             }
-        } else if (compressor && allowed) {
+        } else if (compressor) {// && allowed) {
             // This is an overwrite to an existing block, therefore we need
             // to check for data expansion (i.e., block was compressed with
             // a smaller size, and now it doesn't fit the entry anymore).

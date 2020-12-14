@@ -468,9 +468,9 @@ class BaseCache : public ClockedObject
      */
     virtual bool access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                         PacketList &writebacks);
-
+  public:
     CacheBlk* getBlock(Addr addr, bool isSecure);
-
+  protected:
     /*
      * Handle a timing request that hit in the cache
      *

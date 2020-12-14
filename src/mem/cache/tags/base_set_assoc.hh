@@ -111,6 +111,52 @@ class BaseSetAssoc : public BaseTags
      */
     void invalidate(CacheBlk *blk) override;
 
+    bool checkSecurity(CacheBlk* found_block, Cycles& security_latency)
+    {
+        if (!found_block) return true;
+
+        auto threads = system->threads;
+        ThreadContext* context = threads[0];
+        BaseCPU* cpu = context->getCpuPtr();
+        auto& port = cpu->getTypedSecPort();
+        auto& secCache = (BaseCache&) port.getCache();
+
+        uint32_t their_sec_level = found_block->security_level;
+        uint32_t my_sec_level = context->readIntReg(ThreadContext::SID_REG);
+
+        auto blk = secCache.getBlock(their_sec_level, false);
+        
+        auto comparison_result = 3;
+        if (blk) comparison_result = *blk->data;
+        if(my_sec_level == 0 && their_sec_level != 0){
+            comparison_result = 2;
+        } else if(my_sec_level != 0 && their_sec_level == 0){
+            comparison_result = 1;
+        } else if(my_sec_level == 0 && their_sec_level == 0){
+            comparison_result = 0;
+        }
+
+        DPRINTF(Cache, "Theirs: %d; Mine: %d; Comparison: %d\n", their_sec_level, my_sec_level, comparison_result);
+
+        security_latency += Cycles(1);
+
+        if(comparison_result == 0)
+            return true;
+
+        bool isEvict = lastPkt->isWrite() || lastPkt->isEviction() || lastPkt->isWriteback();
+        bool isRead = lastPkt->isRead();
+        bool isFlush = lastPkt->isFlush();
+
+        if(comparison_result == 1 && isEvict)
+            return false;
+        if(comparison_result == 2 && (isRead || isFlush))
+            return false;
+        if(comparison_result == 3 && (isRead || isFlush))
+            return false;
+
+        return true;
+    }
+
     /**
      * Access block and update replacement data. May not succeed, in which case
      * nullptr is returned. This has all the implications of a cache access and
@@ -125,6 +171,9 @@ class BaseSetAssoc : public BaseTags
     CacheBlk* accessBlock(Addr addr, bool is_secure, Cycles &lat) override
     {
         CacheBlk *blk = findBlock(addr, is_secure);
+        //if (blk->security_level != lastPkt->security_level) blk = nullptr;
+        Cycles security_latency(0);
+        if (!checkSecurity(blk, security_latency)) blk = nullptr;
         //std::cout << "thiis one is mine" << std::endl;
 
         // Access all tags in parallel, hence one in each way.  The data side
@@ -149,7 +198,7 @@ class BaseSetAssoc : public BaseTags
         }
 
         // The tag lookup latency is the same for a hit or a miss
-        lat = lookupLatency;
+        lat = lookupLatency + security_latency;
 
         return blk;
     }

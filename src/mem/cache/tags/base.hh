@@ -161,6 +161,8 @@ class BaseTags : public ClockedObject
     } stats;
 
   public:
+    PacketPtr lastPkt;
+
     typedef BaseTagsParams Params;
     BaseTags(const Params *p);
 
