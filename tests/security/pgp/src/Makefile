@@ -58,14 +58,14 @@ CFLAGS= -O -DUNIX -DPORTABLE $(BYTEORDER)
 CC      = cc
 LD      = cc            # Link command
 LDFLAGS = 
-CPP     = $(CC) -E
+CPP     = $(CC) -m32 -E
 DBG     = -O
 RM      = rm -f
 
 # uncomment this for old versions of make
 #MAKE   = make
 
-ASM     = $(CC) -c              # Assembler command
+ASM     = $(CC) -m32 -c              # Assembler command
 
 OBJS_EXT=                       # ASM obj. files
 LIBS_EXT=                       # Libararies
@@ -149,7 +149,7 @@ OBJS =  $(OBJ1) $(ZIPOBJS) $(RSAOBJS) $(OBJS_EXT)
 CFLAGS = $(CFLAGS) -I$(RSAINCDIR)
 
 $(PROJ):	$(OBJS)
-		$(LD) -o $(PROJ) $(OBJS) $(LDFLAGS) $(LIBS_EXT) $(RSALIBS)
+		$(LD) -m32 -o $(PROJ) $(OBJS) $(LDFLAGS) $(LIBS_EXT) $(RSALIBS)
 
 #  Commodore Amiga Running SVR4 2.1p2a with GCC 2.6.0 LER
 amix-68k-gcc:
@@ -165,7 +165,7 @@ atari:
 
 linux:
 	$(MAKE) all CC=gcc LD=gcc OBJS_EXT="_80386.o _zmatch.o" \
-	CFLAGS="$(RSAINCDIR) -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM"
+	CFLAGS="$(RSAINCDIR) -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM"
 
 arm-linux:
 	$(MAKE) all CC=arm-linux-gcc LD=arm-linux-gcc OBJS_EXT="" \

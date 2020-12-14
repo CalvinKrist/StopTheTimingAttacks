@@ -135,7 +135,7 @@
 #include "rsaglue.h"
 #include "noise.h"
 
-#include "security_tools.h"
+#include "../../security_tools_gcc.h"
 
 #ifdef MACTC5
 #include "Macutil.h"

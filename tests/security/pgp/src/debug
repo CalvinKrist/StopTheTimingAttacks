@@ -1,0 +1,45 @@
+make all CC=gcc LD=gcc OBJS_EXT="_80386.o _zmatch.o" \
+CFLAGS=" -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM"
+make[1]: Entering directory '/mnt/c/StopTheTimingAttacks/tests/security/pgp/src'
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o pgp.o pgp.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o crypto.o crypto.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o keymgmt.o keymgmt.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o fileio.o fileio.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o mdfile.o mdfile.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o more.o more.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o armor.o armor.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o mpilib.o mpilib.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o mpiio.o mpiio.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o genprime.o genprime.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o rsagen.o rsagen.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o random.o random.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o idea.o idea.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o passwd.o passwd.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o md5.o md5.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o system.o system.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o language.o language.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o getopt.o getopt.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o keyadd.o keyadd.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o config.o config.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o keymaint.o keymaint.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o charset.o charset.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o randpool.o randpool.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o noise.o noise.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o zbits.o zbits.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o zdeflate.o zdeflate.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o zfile_io.o zfile_io.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o zglobals.o zglobals.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o zinflate.o zinflate.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o zip.o zip.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o zipup.o zipup.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o ztrees.o ztrees.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o zunzip.o zunzip.c
+gcc -m32 -O6 -g3 -DUNIX -DLINUX -DIDEA32 -DASM   -c -o rsaglue1.o rsaglue1.c
+gcc -m32 -E  80386.S > _80386.s
+gcc -m32 -c               -o _80386.o _80386.s
+rm -f _80386.s
+gcc -m32 -E  zmatch.S > _zmatch.s
+gcc -m32 -c               -o _zmatch.o _zmatch.s
+rm -f _zmatch.s
+gcc -o pgp pgp.o crypto.o keymgmt.o fileio.o mdfile.o more.o armor.o mpilib.o mpiio.o genprime.o rsagen.o random.o idea.o passwd.o md5.o system.o language.o getopt.o keyadd.o config.o keymaint.o charset.o randpool.o noise.o zbits.o zdeflate.o zfile_io.o zglobals.o zinflate.o zip.o zipup.o ztrees.o zunzip.o  rsaglue1.o _80386.o _zmatch.o   
+make[1]: Leaving directory '/mnt/c/StopTheTimingAttacks/tests/security/pgp/src'

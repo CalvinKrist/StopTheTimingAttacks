@@ -342,6 +342,7 @@ copyline(FILE * in, FILE * out)
  * Passing in a buffer less than 2 characters long is not a terribly bright
  * idea.
  */
+    /*
 static int
 getline(char *buf, int n, FILE * f)
 {
@@ -355,16 +356,16 @@ getline(char *buf, int n, FILE * f)
 	c = getc(f);
 	if (c == '\n') {
 	    *p = 0;
-	    return 1;		/* Line terminated with \n or \r\n */
+	    return 1;
 	}
 	if (state) {
 	    ungetc(c, f);
 	    *p = 0;
-	    return 1;		/* Line terminated with \r */
+	    return 1;
 	}
 	if (c == EOF) {
 	    *p = 0;
-	    return (p == buf) ? -1 : 0;		/* Error */
+	    return (p == buf) ? -1 : 0;	
 	}
 	if (c == '\r')
 	    state = 1;
@@ -373,11 +374,11 @@ getline(char *buf, int n, FILE * f)
 	} else {
 	    ungetc(c, f);
 	    *p = 0;
-	    return 0;		/* Out of buffer space */
+	    return 0;
 	}
-    }				/* for (;;) */
-}				/* getline */
-
+    }
+}
+*/
 #if 1
 /* This limit is advisory only; longer lines are handled properly.
  * The only requirement is that this be at least as long as the longest
