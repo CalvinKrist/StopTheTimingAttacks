@@ -82,6 +82,10 @@ BF_LONG bf_cipher[2][2]={
 	};
 /************/
 
+const int UMD = 0;
+const int UMS  = 1;
+int mode = 0; // 0= UMD 1=UMS
+
 /* Lets use the DES test vectors :-) */
 #define NUM_TESTS 1
 static unsigned char ecb_data[NUM_TESTS][8]={
@@ -378,10 +382,11 @@ int test()
 			}
 		}
 	
-	LOWER(level);
-
-	level = (int)NEW_LOWER();
-	NEW_RAISE(); // Create new higher level
+	if(mode == UMD) {
+		LOWER(level);
+		level = (int)NEW_LOWER();
+		NEW_RAISE(); // Create new higher level
+	}
 
 	//printf("testing blowfish in ecb mode\n");
 
@@ -438,10 +443,11 @@ int test()
 			}
 		}
 
-	LOWER(level);
-
-	level = (int)NEW_LOWER();
-	NEW_RAISE(); // Create new higher level
+	if(mode == UMD) {
+		LOWER(level);
+		level = (int)NEW_LOWER();
+		NEW_RAISE(); // Create new higher level
+	}
 
 	//printf("testing blowfish in cbc mode\n");
 	len=strlen(cbc_data)+1;
@@ -473,10 +479,11 @@ int test()
 		err=1;
 		}
 
-	LOWER(level);
-
-	level = (int)NEW_LOWER();
-	NEW_RAISE(); // Create new higher level
+	if(mode == UMD) {
+		LOWER(level);
+		level = (int)NEW_LOWER();
+		NEW_RAISE(); // Create new higher level
+	}
 
 	//printf("testing blowfish in cfb64 mode\n");
 
@@ -507,10 +514,11 @@ int test()
 		err=1;
 		}
 
-	LOWER(level);
-
-	level = (int)NEW_LOWER();
-	NEW_RAISE(); // Create new higher level
+	if(mode == UMD) {
+		LOWER(level);
+		level = (int)NEW_LOWER();
+		NEW_RAISE(); // Create new higher level
+	}
 
 	BF_set_key(&key,16,cbc_key);
 	memset(cbc_in,0,40);
@@ -546,10 +554,13 @@ int main(int argc, char*argv[])
 	SWITCH_THREAD(CREATETHREAD());
 	int ret;
 
-	if (argc > 1)
-		ret=print_test_data();
-	else 
-		ret=test();
+	mode = *argv[1] - 0x30;
+	if(mode == UMD)
+		printf("Testing UMD\n");
+	if(mode == UMS)
+		printf("Testing UMS\n");
+	
+	ret=test();
 
 	exit(ret);
 	}

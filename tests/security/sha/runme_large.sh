@@ -1,2 +1,2 @@
 #!/bin/sh
-./sha input_large.asc > output_large.txt
+./sha 0 input_large.asc > output_large.txt

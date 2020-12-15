@@ -143,8 +143,6 @@ void sha_init(SHA_INFO *sha_info, int level)
 
 void sha_update(SHA_INFO *sha_info, BYTE *buffer, int count, int level)
 {
-    LEVEL_POP();
-
     if ((sha_info->count_lo + ((LONG) count << 3)) < sha_info->count_lo) {
 	++sha_info->count_hi;
     }
@@ -160,16 +158,12 @@ void sha_update(SHA_INFO *sha_info, BYTE *buffer, int count, int level)
 	count -= SHA_BLOCKSIZE;
     }
     memcpy(sha_info->data, buffer, count);
-
-    LOWER(level);
 }
 
 /* finish computing the SHA digest */
 
 void sha_final(SHA_INFO *sha_info, int level)
 {
-    LEVEL_POP();
-
     int count;
     LONG lo_bit_count, hi_bit_count;
 
@@ -193,8 +187,6 @@ void sha_final(SHA_INFO *sha_info, int level)
     sha_info->data[14] = hi_bit_count;
     sha_info->data[15] = lo_bit_count;
     sha_transform(sha_info);
-
-    LOWER(level);
 }
 
 /* compute the SHA digest of a FILE stream */
@@ -206,9 +198,7 @@ void sha_stream(SHA_INFO *sha_info, FILE *fin)
     int i;
     BYTE data[BLOCK_SIZE];
 
-    int level = (int) GET_LEVEL();
-    NEW_RAISE(); // Create new higher level
-    LOWER(level); // Push higher level to stack, return back to the lower level.
+    int level = 0;
 
     sha_init(sha_info, level);
     while ((i = fread(data, 1, BLOCK_SIZE, fin)) > 0) {
