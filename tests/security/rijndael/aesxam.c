@@ -45,6 +45,8 @@
 
 #include "aes.h"
 
+
+
 /* A Pseudo Random Number Generator (PRNG) used for the     */
 /* Initialisation Vector. The PRNG is George Marsaglia's    */
 /* Multiply-With-Carry (MWC) PRNG that concatenates two     */
@@ -73,6 +75,8 @@
 
 #define RAND(a,b) (((a = 36969 * (a & 65535) + (a >> 16)) << 16) + (b = 18000 * (b & 65535) + (b >> 16))  )
 
+char * enc_file = 0;
+
 void fillrand(char *buf, int len)
 {   static unsigned long a[2], mt = 1, count = 4;
     static char          r[4];
@@ -95,9 +99,27 @@ void fillrand(char *buf, int len)
 
         buf[i] = r[count++];
     }
-}    
+}  
 
-int encfile(FILE *fin, FILE *fout, aes *ctx, char* fn)
+int
+mywrite_enc(const void * ptr, size_t size, size_t count, FILE * stream )  
+{
+   int r1 = fwrite(ptr, size, count, stream);
+   memcpy(enc_file, ptr, count * size);
+   
+   return r1;
+}
+
+int
+mywrite_dec(const void * ptr, size_t size, size_t count, FILE * stream )  
+{
+   int r1 = fwrite(ptr, size, count, stream);
+   memcpy(enc_file, ptr, count * size);
+   
+   return r1;
+}
+
+int encfile(FILE *fin, char *fout, aes *ctx, char* fn)
 {   char            inbuf[16], outbuf[16];
     fpos_t          flen;
     unsigned long   i=0, l=0;
@@ -161,7 +183,7 @@ int encfile(FILE *fin, FILE *fout, aes *ctx, char* fn)
     return 0;
 }
 
-int decfile(FILE *fin, FILE *fout, aes *ctx, char* ifn, char* ofn)
+int decfile(char *fin, FILE *fout, aes *ctx, char* ifn, char* ofn)
 {   char    inbuf1[16], inbuf2[16], outbuf[16], *bp1, *bp2, *tp;
     int     i, l, flen;
 
@@ -233,7 +255,7 @@ int decfile(FILE *fin, FILE *fout, aes *ctx, char* ifn, char* ofn)
     return 0;
 }
 
-int main(int argc, char *argv[])
+int wrap(int argc, char *argv[])
 {
     SWITCH_THREAD(CREATETHREAD());
     auto level = GET_LEVEL();
@@ -298,7 +320,7 @@ int main(int argc, char *argv[])
     }
 
     NEW_RAISE();
-    if(toupper(*argv[3]) == 'E')
+     if(toupper(*argv[3]) == 'E')
     {                           /* encryption in Cipher Block Chaining mode */
         set_key(key, key_len, enc, ctx);
 
@@ -319,4 +341,13 @@ exit:
         fclose(fin);
 
     return err;
+}
+
+
+int main(int argc, char *argv[])
+{
+    char * args1[5] = {"rijndael", "security/rijndael/input_small.asc", "security/rijndael/output_small.enc", "e", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
+    wrap(5, args1);
+    char * args2[5] = {"rijndael", "security/rijndael/output_small.enc", "security/rijndael/output_small.dec", "d", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
+    wrap(5, args2);
 }
