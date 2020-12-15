@@ -45,7 +45,9 @@
 
 #include "aes.h"
 
-
+const int UMD = 0;
+const int UMS  = 1;
+int mode = 0; // 0= UMD 1=UMS
 
 /* A Pseudo Random Number Generator (PRNG) used for the     */
 /* Initialisation Vector. The PRNG is George Marsaglia's    */
@@ -257,8 +259,6 @@ int decfile(char *fin, FILE *fout, aes *ctx, char* ifn, char* ofn)
 
 int wrap(int argc, char *argv[])
 {
-    SWITCH_THREAD(CREATETHREAD());
-    auto level = GET_LEVEL();
 
     FILE    *fin = 0, *fout = 0;
     char    *cp, ch, key[32];
@@ -274,7 +274,6 @@ int wrap(int argc, char *argv[])
     cp = argv[4];   /* this is a pointer to the hexadecimal key digits  */
     i = 0;          /* this is a count for the input digits processed   */
     
-    NEW_RAISE();
     while(i < 64 && *cp)    /* the maximum key length is 32 bytes and   */
     {                       /* hence at most 64 hexadecimal digits      */
         ch = toupper(*cp++);            /* process a hexadecimal digit  */
@@ -292,7 +291,6 @@ int wrap(int argc, char *argv[])
         if(i++ & 1) 
             key[i / 2 - 1] = by & 0xff; 
     }
-    LOWER(level);
 
     if(*cp)
     {
@@ -319,7 +317,6 @@ int wrap(int argc, char *argv[])
         err = -6; goto exit;
     }
 
-    NEW_RAISE();
      if(toupper(*argv[3]) == 'E')
     {                           /* encryption in Cipher Block Chaining mode */
         set_key(key, key_len, enc, ctx);
@@ -332,7 +329,6 @@ int wrap(int argc, char *argv[])
     
         err = decfile(fin, fout, ctx, argv[1], argv[2]);
     }
-    LOWER(level);
 
 exit:   
     if(fout) 
@@ -346,8 +342,23 @@ exit:
 
 int main(int argc, char *argv[])
 {
-    char * args1[5] = {"rijndael", "security/rijndael/our_input.asc", "security/rijndael/our_input.enc", "e", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
-    wrap(5, args1);
-    char * args2[5] = {"rijndael", "security/rijndael/our_input.enc", "security/rijndael/our_input.dec", "d", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
-    wrap(5, args2);
+    SWITCH_THREAD(CREATETHREAD());
+    auto level = GET_LEVEL();
+
+    mode = *argv[1] - 0x30;
+    if(mode == UMD)
+        printf("Testing UMD\n");
+    if(mode == UMS)
+        printf("Testing UMS\n");
+
+    for(int i = 0; i < 10; i++) {
+        if(mode == UMD)
+            NEW_RAISE(); // Create new higher level
+        char * args1[5] = {"rijndael", "security/rijndael/our_input.asc", "security/rijndael/our_input.enc", "e", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
+        wrap(5, args1);
+        char * args2[5] = {"rijndael", "security/rijndael/our_input.enc", "security/rijndael/our_input.dec", "d", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
+        wrap(5, args2);
+        if(mode == UMD)
+            LOWER(level); // Push higher level to stack, return back to the lower level.
+    }
 }
