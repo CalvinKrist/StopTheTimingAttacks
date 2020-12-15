@@ -352,6 +352,7 @@ int main(int argc, char *argv[])
         printf("Testing UMS\n");
 
     for(int i = 0; i < 10; i++) {
+        SAMPLE_CACHE_USAGE();
         if(mode == UMD)
             NEW_RAISE(); // Create new higher level
         char * args1[5] = {"rijndael", "security/rijndael/our_input.asc", "security/rijndael/our_input.enc", "e", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
@@ -361,4 +362,5 @@ int main(int argc, char *argv[])
         if(mode == UMD)
             LOWER(level); // Push higher level to stack, return back to the lower level.
     }
+    SAMPLE_CACHE_USAGE();
 }

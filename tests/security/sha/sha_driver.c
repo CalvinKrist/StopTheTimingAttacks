@@ -26,6 +26,7 @@ int main(int argc, char **argv)
    
 	int level = (int) GET_LEVEL();
 	for(int i = 0; i < 10; i++) {
+		SAMPLE_CACHE_USAGE();
 		fin = fopen(argv[2], "rb");
 		SHA_INFO sha_info;
     	if(mode == UMD)
@@ -36,6 +37,6 @@ int main(int argc, char **argv)
 		if(mode == UMD)
 			LOWER(level); // Push higher level to stack, return back to the lower level.
 	}
-
+		SAMPLE_CACHE_USAGE();
     return(0);
 }

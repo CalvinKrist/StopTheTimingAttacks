@@ -17,14 +17,13 @@
 #include "security_tools.h"
 
 int main(){
-	exit(69);
+	auto tid = CREATETHREAD();
+	SWITCH_THREAD(tid);
 	int _tmp;
 	BEGIN_TIME();
 	printf("Hell%llu, w%drld!\n", 0, 0);
 	SAMPLE_CACHE_USAGE();
 	END_TIME(&_tmp);
-	auto tid = CREATETHREAD();
-	SWITCH_THREAD(tid);
 
 	char* buff = (char*)mmap(0, 64 * 1024 * 1024, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	char tmp = 0;

@@ -87,7 +87,7 @@ const int UMS  = 1;
 int mode = 0; // 0= UMD 1=UMS
 
 /* Lets use the DES test vectors :-) */
-#define NUM_TESTS 1
+#define NUM_TESTS 10
 static unsigned char ecb_data[NUM_TESTS][8]={
 	{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
 	{0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF},
@@ -392,6 +392,7 @@ int test()
 
 	for (n=0; n<NUM_TESTS; n++)
 		{
+		SAMPLE_CACHE_USAGE();
 		BF_set_key(&key,8,ecb_data[n]);
 
 		
