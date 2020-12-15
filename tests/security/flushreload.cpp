@@ -61,7 +61,8 @@ int main(int argc, char** argv){
 	auto tid = CREATETHREAD();
 	SWITCH_THREAD(tid);
 	auto level = GET_LEVEL();
-
+	auto higher = NEW_RAISE();
+	LOWER(level);
 	bool useSecLevels = *argv[1] == '1';
 	if(useSecLevels){
 		printf("Security enabled\n");
@@ -76,11 +77,11 @@ int main(int argc, char** argv){
 	short secret = 0x24;
 	uint64_t time;
 
-	for(int k = 0; k < 1000; k++){
+	for(int k = 0; k < 100; k++){
 		mem_flush(buff, 64 * 256);
 
 		if(useSecLevels){
-			NEW_RAISE();
+			LEVEL_POP();
 		}
 		buff[secret * 64] = 1; // secret dependent access!
 		if(useSecLevels){
@@ -100,6 +101,7 @@ int main(int argc, char** argv){
 			best_time = timings[i];
 			best_v = i;
 		}
+		printf("%d, %llu\n", i, timings[i]);
 	}
 	printf("Guess: %d (at %llu)\n", best_v, best_time);
 }
