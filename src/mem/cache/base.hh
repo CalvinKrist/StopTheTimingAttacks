@@ -109,6 +109,7 @@ class BaseCache : public ClockedObject
     };
 
     bool checkSecurity(CacheBlk * found_block, PacketPtr pkt, Cycles& security_latency);
+    uint64_t linefills = 0;  // pseudostat which increases when empty lines are filled, i.e. when lines are filled w/o eviction
 
   protected:
 
@@ -311,7 +312,7 @@ class BaseCache : public ClockedObject
 
     public:
         bool add_security_cache_line(uint32_t level, char comparison);
-    protected:
+    // protected:
 
     CpuSidePort cpuSidePort;
     MemSidePort memSidePort;

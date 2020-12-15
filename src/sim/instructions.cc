@@ -4,8 +4,11 @@
 #include <stack>
 #include <queue>
 #include <set>
+#include <iostream>
+#include <fstream>
 
 #include "mem/cache/base.hh"
+#include "mem/xbar.hh"
 
 InstructionFunc instructions[10]{
 	inst_CREATETHREAD,
@@ -540,9 +543,19 @@ uint32_t inst_ATTACH(INST_COMMON_PARAMS, uint32_t attach_to, uint32_t to_attach)
     return 0;
 }
 
-uint32_t inst_GETLEVEL(INST_COMMON_PARAMS, uint32_t cycles, UNUSED_INST_PARAM){
-    if(cycles)
+uint32_t inst_GETLEVEL(INST_COMMON_PARAMS, uint32_t cycles, UNUSED_INST_PARAM){ 
+    if(cycles==1) // get the current cycle
         return static_cast<uint32_t>((uint64_t) context->getCpuPtr()->curCycle());
-    else
-	return static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG));
+    if(cycles==2) {
+        BaseCache* l1Dcache = (BaseCache*)(&((ResponsePort*)(&(context->getCpuPtr()->getDataPort().getPeer())))->owner);
+        BaseXBar* toL2Cache = (BaseXBar*)(&((ResponsePort*)(&(l1Dcache->memSidePort.getPeer())))->owner);
+        BaseCache* l2Cache = (BaseCache*)(&((ResponsePort*)(&(toL2Cache->memSidePorts.at(0)->getPeer())))->owner);
+        //std::cout << l2Cache->name() << std::endl;
+        std::ofstream file;
+        file.open("occupancy_data.csv", std::ios::app);
+        file << l2Cache->linefills << ", ";
+        file.close();
+        return 0;
+    }
+	return static_cast<uint32_t>(context->readIntReg(ThreadContext::SID_REG));  // get the current sec_id
 }

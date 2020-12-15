@@ -819,6 +819,8 @@ BaseCache::handleEvictions(std::vector<CacheBlk*> &evict_blks,
     // counter if a valid block is being replaced
     if (replacement) {
         stats.replacements++;
+        if (linefills) linefills--;
+        //std::cout << name() << std::endl;
 
         // Evict valid blocks associated to this victim block
         for (auto& blk : evict_blks) {
@@ -1107,6 +1109,7 @@ bool
 BaseCache::access(PacketPtr pkt, CacheBlk *&blk, Cycles &lat,
                   PacketList &writebacks)
 {
+    
     // sanity check
     assert(pkt->isRequest());
 
@@ -1547,6 +1550,7 @@ BaseCache::allocateBlock(const PacketPtr pkt, PacketList &writebacks)
     }
 
     // Insert new block at victimized entry
+    linefills++;
     if(useSecLevels){
         auto threads = system->threads;
         ThreadContext* context = threads[0];

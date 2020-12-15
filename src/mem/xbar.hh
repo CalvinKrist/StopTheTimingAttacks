@@ -374,7 +374,9 @@ class BaseXBar : public ClockedObject
 
     /** The memory-side ports and CPU-side ports of the crossbar */
     std::vector<QueuedResponsePort*> cpuSidePorts;
+public:
     std::vector<RequestPort*> memSidePorts;
+protected:
 
     /** Port that handles requests that don't match any of the interfaces.*/
     PortID defaultPortID;

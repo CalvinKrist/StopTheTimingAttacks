@@ -45,6 +45,9 @@ enum InstructionID {
 #define GET_LEVEL() \
     lseek(0x40000000 | GETLEVEL, 0, 0)
 
+#define SAMPLE_CACHE_USAGE() \
+    lseek(0x40000000 | GETLEVEL, 2, 0)
+
 #define GET_CYCLES() \
     lseek(0x40000000 | GETLEVEL, 1, 0)
 
