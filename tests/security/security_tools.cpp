@@ -32,7 +32,6 @@ int main(){
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
-		SAMPLE_CACHE_USAGE();
 	}
 	END_TIME(&time);
 	printf("%d\tCold start time: %llu cycles\n", GET_LEVEL(), time);
@@ -40,7 +39,6 @@ int main(){
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
-		SAMPLE_CACHE_USAGE();
 	}
 	END_TIME(&time);
 	printf("%d\tWarmed up time: %llu cycles\n", GET_LEVEL(), time);
@@ -50,7 +48,6 @@ int main(){
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
-		SAMPLE_CACHE_USAGE();
 	}
 	END_TIME(&time);
 	printf("%d\tCold lowered time: %llu\n", GET_LEVEL(), time);
@@ -58,7 +55,6 @@ int main(){
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
-		SAMPLE_CACHE_USAGE();
 	}
 	END_TIME(&time);
 	printf("%d\tWarmed up lowered time: %llu\n", GET_LEVEL(), time);
@@ -68,7 +64,6 @@ int main(){
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
-		SAMPLE_CACHE_USAGE();
 	}
 	END_TIME(&time);
 	printf("%d\tStill warm, but raised: %llu\n", GET_LEVEL(), time);
@@ -78,7 +73,6 @@ int main(){
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
-		SAMPLE_CACHE_USAGE();
 	}
 	END_TIME(&time);
 	printf("%d\tStill warm, but raised again: %lld\n", GET_LEVEL(), time);
@@ -88,7 +82,6 @@ int main(){
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
-		SAMPLE_CACHE_USAGE();
 	}
 	END_TIME(&time);
 	printf("%d\tLowered but incomparable (cold): %lld\n", GET_LEVEL(), time);
@@ -96,7 +89,6 @@ int main(){
 	BEGIN_TIME();
 	for(int i = 0; i < 64 * 1024; i += 64){
 		tmp = buff[i];
-		SAMPLE_CACHE_USAGE();
 	}
 	END_TIME(&time);
 	printf("%d\tLowered but incomparable (warmed up): %lld\n", GET_LEVEL(), time);
