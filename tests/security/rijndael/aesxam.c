@@ -346,8 +346,8 @@ exit:
 
 int main(int argc, char *argv[])
 {
-    char * args1[5] = {"rijndael", "security/rijndael/input_small.asc", "security/rijndael/output_small.enc", "e", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
+    char * args1[5] = {"rijndael", "security/rijndael/our_input.asc", "security/rijndael/our_input.enc", "e", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
     wrap(5, args1);
-    char * args2[5] = {"rijndael", "security/rijndael/output_small.enc", "security/rijndael/output_small.dec", "d", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
+    char * args2[5] = {"rijndael", "security/rijndael/our_input.enc", "security/rijndael/our_input.dec", "d", "1234567890abcdeffedcba09876543211234567890abcdeffedcba0987654321"};
     wrap(5, args2);
 }

@@ -512,8 +512,6 @@ int test()
 	level = (int)NEW_LOWER();
 	NEW_RAISE(); // Create new higher level
 
-	//printf("testing blowfish in ofb64\n");
-
 	BF_set_key(&key,16,cbc_key);
 	memset(cbc_in,0,40);
 	memset(cbc_out,0,40);
@@ -550,11 +548,8 @@ int main(int argc, char*argv[])
 
 	if (argc > 1)
 		ret=print_test_data();
-	else {
-		for(int i = 0; i < 1000; i++) 
-			ret=test();
-	}
+	else 
+		ret=test();
 
-	printf("Ran 1000 times.\n");
 	exit(ret);
 	}
